@@ -257,13 +257,14 @@ public class InMemorySessionHandler implements SessionHandler {
     @Override
     public void cleanup(long maxInactiveIntervalSeconds) {
         // Trim usedAssertionIds to size with sessionHandlerNumTrackedSessionIds
+        long maxInactiveIntervalMillis = maxInactiveIntervalSeconds * 1000;
         while (!usedAssertionIds.isEmpty() && usedAssertionIds.size() > sessionHandlerNumTrackedSessionIds) {
             usedAssertionIds.remove(usedAssertionIds.pollFirst());
         }
-        cleanup(sessionIndexMap, maxInactiveIntervalSeconds, "SessionIndexMap");
-        cleanup(assertions, maxInactiveIntervalSeconds, "Assertions");
-        cleanup(authnRequests, maxInactiveIntervalSeconds, "AuthnRequests");
-        cleanup(logoutRequests, maxInactiveIntervalSeconds, "LogoutRequests");
+        cleanup(sessionIndexMap, maxInactiveIntervalMillis, "SessionIndexMap");
+        cleanup(assertions, maxInactiveIntervalMillis, "Assertions");
+        cleanup(authnRequests, maxInactiveIntervalMillis, "AuthnRequests");
+        cleanup(logoutRequests, maxInactiveIntervalMillis, "LogoutRequests");
     }
 
     private <E, T> void cleanup(Map<E, TimeOutWrapper<T>> map, long cleanupDelay, String msg) {

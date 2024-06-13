@@ -48,11 +48,6 @@ public class SamlHelper {
             String name = attribute.getName();
             String value = extractAttributeValueValue(attribute);
 
-            // never extract CPR
-            if ("dk:gov:saml:attribute:CprNumberIdentifier".equals(name)) {
-                continue;
-            }
-
             if (name != null && value != null && !name.isEmpty() && !value.isEmpty()) {
                 result.put(name, value);
             }

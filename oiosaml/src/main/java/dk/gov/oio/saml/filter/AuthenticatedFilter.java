@@ -9,6 +9,7 @@ import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
@@ -91,7 +92,13 @@ public class AuthenticatedFilter implements Filter {
                 }
 
                 AppSwitchPlatform appSwitchPlatform = getAppSwitchPlatformFromUrl(request);
-                MessageContext<SAMLObject> authnRequest = authnRequestService.createMessageWithAuthnRequest(isPassive, forceAuthn, requiredNsisLevel, attributeProfile, appSwitchPlatform);
+                Cookie[] cookies = req.getCookies();
+                if (cookies == null) {
+                    cookies = new Cookie[0];
+                }
+                Cookie selectedIdp = Arrays.asList(cookies).stream().filter(c -> "_saml_idp".equals(c.getName())).findAny().orElse(null);
+                String entityID = selectedIdp != null ? selectedIdp.getValue() : null;
+                MessageContext<SAMLObject> authnRequest = authnRequestService.createMessageWithAuthnRequest(isPassive, forceAuthn, requiredNsisLevel, attributeProfile, appSwitchPlatform, entityID);
 
                 //Audit logging
                 OIOSAML3Service.getAuditService().auditLog(AuditRequestUtil

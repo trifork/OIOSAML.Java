@@ -41,7 +41,7 @@ public class IdpMetadataServiceTest extends BaseServiceTest {
         config.setIdpMetadataFile(fileLocation);
 
         // Get metadata
-        EntityDescriptor entityDescriptor = IdPMetadataService.getInstance().getIdPMetadata().getEntityDescriptor();
+        EntityDescriptor entityDescriptor = IdPMetadataService.getInstance().getIdPMetadata(config.getIdpEntityID()).getEntityDescriptor();
         Assertions.assertNotNull(entityDescriptor);
         Assertions.assertEquals(TestConstants.IDP_ENTITY_ID, entityDescriptor.getEntityID());
 
@@ -65,7 +65,8 @@ public class IdpMetadataServiceTest extends BaseServiceTest {
                    .withStatusCode(200)
                    .withBody(TestConstants.IDP_METADATA));
         
-        EntityDescriptor entityDescriptor = IdPMetadataService.getInstance().getIdPMetadata().getEntityDescriptor();
+        String entityID = OIOSAML3Service.getConfig().getIdpEntityID();
+        EntityDescriptor entityDescriptor = IdPMetadataService.getInstance().getIdPMetadata(entityID).getEntityDescriptor();
         Assertions.assertNotNull(entityDescriptor);
         Assertions.assertEquals(TestConstants.IDP_ENTITY_ID, entityDescriptor.getEntityID());
     }
@@ -86,7 +87,8 @@ public class IdpMetadataServiceTest extends BaseServiceTest {
                    .withBody(TestConstants.BAD_IDP_METADATA));
 
         // we should get NULL back, if the EntityId does not match
-        EntityDescriptor entityDescriptor = IdPMetadataService.getInstance().getIdPMetadata().getEntityDescriptor();
+        String entityID = OIOSAML3Service.getConfig().getIdpEntityID();
+        EntityDescriptor entityDescriptor = IdPMetadataService.getInstance().getIdPMetadata(entityID).getEntityDescriptor();
         Assertions.assertNull(entityDescriptor);
     }
 }

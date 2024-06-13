@@ -74,15 +74,20 @@ public class AuthnRequestService {
         return (AuthnRequest) messageContext.getMessage();
     }
 
-    public MessageContext<SAMLObject> createMessageWithAuthnRequest(boolean isPassive, boolean forceAuthn, NSISLevel requiredNsisLevel, String attributeProfile, AppSwitchPlatform platform) throws InternalException, ExternalException, InitializationException {
+    public MessageContext<SAMLObject> createMessageWithAuthnRequest(boolean isPassive, boolean forceAuthn, NSISLevel requiredNsisLevel, String attributeProfile, AppSwitchPlatform platform, String selectedIdp) throws InternalException, ExternalException, InitializationException {
         // Create message context
         MessageContext<SAMLObject> messageContext = new MessageContext<>();
 
         // Get Destination URL from IdP metadata
-        String destination = getDestination();
+        if (selectedIdp == null) {
+            selectedIdp = OIOSAML3Service.getConfig().getIdpEntityID();
+        }
+        String[] idpList = selectedIdp.split(" ");
+        String destination = getDestination(idpList[0]);
+        String scope = idpList.length > 1 ? idpList[1] : null;
 
         // Create AuthnRequest
-        AuthnRequest newAuthnRequest = createAuthnRequest(destination, isPassive, forceAuthn, requiredNsisLevel, attributeProfile, platform);
+        AuthnRequest newAuthnRequest = createAuthnRequest(destination, isPassive, forceAuthn, requiredNsisLevel, attributeProfile, platform, scope);
         messageContext.setMessage(newAuthnRequest);
 
         // Destination
@@ -109,12 +114,22 @@ public class AuthnRequestService {
     }
 
     public AuthnRequest createAuthnRequest(String destination, boolean isPassive, boolean forceAuthn, NSISLevel requiredNsisLevel, AppSwitchPlatform platform) throws InitializationException {
-        return createAuthnRequest(destination, isPassive, forceAuthn, requiredNsisLevel, null, platform);
+        return createAuthnRequest(destination, isPassive, forceAuthn, requiredNsisLevel, null, platform, null);
     }
 
-    public AuthnRequest createAuthnRequest(String destination, boolean isPassive, boolean forceAuthn, NSISLevel requiredNsisLevel, String attributeProfile, AppSwitchPlatform platform) throws InitializationException {
+    public AuthnRequest createAuthnRequest(String destination, boolean isPassive, boolean forceAuthn, NSISLevel requiredNsisLevel, String attributeProfile, AppSwitchPlatform platform, String scope) throws InitializationException {
         // Create new AuthnRequest
         AuthnRequest authnRequest = SamlHelper.build(AuthnRequest.class);
+
+        if (scope != null) {
+            Scoping scoping = SamlHelper.build(Scoping.class);
+            IDPList idpList = SamlHelper.build(IDPList.class);
+            IDPEntry idpEntry = SamlHelper.build(IDPEntry.class);
+            idpEntry.setProviderID(scope);
+            idpList.getIDPEntrys().add(idpEntry);
+            scoping.setIDPList(idpList);
+            authnRequest.setScoping(scoping);
+        }
 
         // Set ID
         RandomIdentifierGenerationStrategy secureRandomIdGenerator = new RandomIdentifierGenerationStrategy();
@@ -210,8 +225,8 @@ public class AuthnRequestService {
         return returnURL;
     }
 
-    private String getDestination() throws ExternalException, InternalException {
-        EntityDescriptor metadata = IdPMetadataService.getInstance().getIdPMetadata().getEntityDescriptor();
+    private String getDestination(String entityID) throws ExternalException, InternalException {
+        EntityDescriptor metadata = IdPMetadataService.getInstance().getIdPMetadata(entityID).getEntityDescriptor();
         IDPSSODescriptor idpssoDescriptor = metadata.getIDPSSODescriptor(SAMLConstants.SAML20P_NS);
 
         for (SingleSignOnService singleSignOnService : idpssoDescriptor.getSingleSignOnServices()) {

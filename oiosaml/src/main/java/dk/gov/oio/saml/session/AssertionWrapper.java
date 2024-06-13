@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import dk.gov.oio.saml.util.StringUtil;
 import org.joda.time.DateTime;
 import org.opensaml.core.xml.io.MarshallingException;
 import org.opensaml.saml.saml2.core.Assertion;
@@ -21,8 +20,6 @@ import org.opensaml.saml.saml2.core.Subject;
 import org.opensaml.saml.saml2.core.SubjectConfirmation;
 import org.opensaml.saml.saml2.core.SubjectConfirmationData;
 import org.opensaml.saml.saml2.core.impl.AssertionMarshaller;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.w3c.dom.Element;
 
 import dk.gov.oio.saml.model.NSISLevel;
@@ -31,9 +28,9 @@ import dk.gov.oio.saml.oiobpp.PrivilegeList;
 import dk.gov.oio.saml.util.Constants;
 import dk.gov.oio.saml.util.InternalException;
 import dk.gov.oio.saml.util.SamlHelper;
+import dk.gov.oio.saml.util.StringUtil;
 
 public class AssertionWrapper implements Serializable {
-    private static final Logger log = LoggerFactory.getLogger(AssertionWrapper.class);
     private static final long serialVersionUID = -4561395634523843337L;
 
     private String id;

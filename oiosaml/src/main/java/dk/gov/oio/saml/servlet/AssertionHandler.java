@@ -11,9 +11,12 @@ import dk.gov.oio.saml.session.SessionHandler;
 import dk.gov.oio.saml.util.*;
 import org.joda.time.DateTime;
 import org.opensaml.core.xml.io.MarshallingException;
+import org.opensaml.core.xml.schema.XSAny;
+import org.opensaml.core.xml.schema.impl.XSAnyBuilder;
 import org.opensaml.messaging.context.MessageContext;
 import org.opensaml.saml.common.SAMLObject;
 import org.opensaml.saml.common.assertion.AssertionValidationException;
+import org.opensaml.saml.common.xml.SAMLConstants;
 import org.opensaml.saml.saml2.core.*;
 
 import dk.gov.oio.saml.service.AssertionService;
@@ -58,10 +61,15 @@ public class AssertionHandler extends SAMLHandler {
         // Get response status
         Status status = response.getStatus();
         String responseStatus = "";
+        String nestedResponseStatus = "";
         if (status != null) {
             StatusCode code = status.getStatusCode();
             if (code != null) {
                 responseStatus += code.getValue();
+                StatusCode nestedCode = code.getStatusCode();
+                if (nestedCode != null) {
+                    nestedResponseStatus = nestedCode.getValue();
+                }
             }
 
             StatusMessage message = status.getStatusMessage();
@@ -85,20 +93,43 @@ public class AssertionHandler extends SAMLHandler {
 
         // Get AuthnRequest with matching ID (inResponseTo)
         SessionHandler sessionHandler = OIOSAML3Service.getSessionHandlerFactory().getHandler();
-        AuthnRequestWrapper authnRequest = sessionHandler.getAuthnRequest(httpServletRequest.getSession());
+        AuthnRequestWrapper authnRequest = response.getInResponseTo() != null ? sessionHandler.getAuthnRequest(httpServletRequest.getSession()) : null;
 
         if (authnRequest == null) {
-            throw new InternalException("No AuthnRequest found on session");
+            // Unsolicited saml response
+            if (!OIOSAML3Service.getConfig().isUnsolicitedSAMLResponseAllowed()) {
+                throw new InternalException("No AuthnRequest found on session");
+            }
         }
 
-        // Get assertion
-        AssertionService assertionService = new AssertionService();
-        Assertion assertion = assertionService.getAssertion(response);
+        boolean passiveAndNotAuthenticated = false;
+
+        Assertion assertion;
+        if (authnRequest != null && authnRequest.isPassive() && StatusCode.RESPONDER.equals(responseStatus) && StatusCode.NO_PASSIVE.equals(nestedResponseStatus)) {
+            // We asked for passive login, and IdP found no active login - create "guest" assertion: 
+			log.debug("Received passive response, setting passive assertion");
+            assertion = SamlHelper.build(Assertion.class);
+            assertion.setID("" + System.currentTimeMillis());
+            assertion.setIssueInstant(DateTime.now());
+            AttributeStatement attributeStatement = SamlHelper.build(AttributeStatement.class);
+
+            Attribute attribute = createAttribute(Constants.ASSURANCE_LEVEL, "0");
+
+            attributeStatement.getAttributes().add(attribute);
+            assertion.getAttributeStatements().add(attributeStatement);
+
+            passiveAndNotAuthenticated = true;
+
+        } else {
+            // Get assertion
+            AssertionService assertionService = new AssertionService();
+            assertion = assertionService.getAssertion(response);
+        }
 
         // Audit log builder
         AuditService.Builder auditBuilder = AuditRequestUtil
                 .createBasicAuditBuilder(httpServletRequest, "BSA6", "ValidateAssertion")
-                .withAuthnAttribute("AUTHN_REQUEST_ID", authnRequest.getId())
+                .withAuthnAttribute("AUTHN_REQUEST_ID", authnRequest != null ? authnRequest.getId() : "-")
                 .withAuthnAttribute("RESPONSE_ID", response.getID())
                 .withAuthnAttribute("ASSERTION_ID", assertion.getID())
                 .withAuthnAttribute("IN_RESPONSE_TO", response.getInResponseTo())
@@ -107,37 +138,40 @@ public class AssertionHandler extends SAMLHandler {
                 .withAuthnAttribute("ISSUE_INSTANT", instant)
                 .withAuthnAttribute("DESTINATION", response.getDestination());
 
-        // Validate
-        AssertionWrapper wrapper;
-        try {
-            AssertionValidationService validationService = new AssertionValidationService();
-            validationService.validate(httpServletRequest, messageContext, response, assertion, authnRequest);
+        if (!passiveAndNotAuthenticated) {
 
-            if (assertion.getAttributeStatements() == null || assertion.getAttributeStatements().size() != 1) {
-                throw new ExternalException("Assertion AttributeStatements were null or had more than one");
+            // Validate
+            AssertionWrapper wrapper;
+            try {
+                AssertionValidationService validationService = new AssertionValidationService();
+                validationService.validate(httpServletRequest, messageContext, response, assertion, authnRequest);
+    
+                if (assertion.getAttributeStatements() == null || assertion.getAttributeStatements().size() != 1) {
+                    throw new ExternalException("Assertion AttributeStatements were null or had more than one");
+                }
+    
+                // Assertion needs to be validated before creating the wrapper
+                wrapper = new AssertionWrapper(assertion);
+    
+                log.debug("Assertion: {}", wrapper);
+    
+                auditBuilder
+                        .withAuthnAttribute("RESULT", "VALID")
+                        .withAuthnAttribute("SESSION_INDEX", wrapper.getSessionIndex())
+                        .withAuthnAttribute("SIGNATURE_REFERENCE", assertion.getSignatureReferenceID())
+                        .withAuthnAttribute("SIGNATURE_ENTITY", wrapper.getSigningCredentialEntityId())
+                        .withAuthnAttribute("ASSURANCE_LEVEL", wrapper.getAssuranceLevel())
+                        .withAuthnAttribute("NSIS_LEVEL", wrapper.getNsisLevel().getName())
+                        .withAuthnAttribute("SUBJECT_NAME_ID", wrapper.getSubjectNameId());
             }
-
-            // Assertion needs to be validated before creating the wrapper
-            wrapper = new AssertionWrapper(assertion);
-
-            log.debug("Assertion: {}", wrapper);
-
-            auditBuilder
-                    .withAuthnAttribute("RESULT", "VALID")
-                    .withAuthnAttribute("SESSION_INDEX", wrapper.getSessionIndex())
-                    .withAuthnAttribute("SIGNATURE_REFERENCE", assertion.getSignatureReferenceID())
-                    .withAuthnAttribute("SIGNATURE_ENTITY", wrapper.getSigningCredentialEntityId())
-                    .withAuthnAttribute("ASSURANCE_LEVEL", wrapper.getAssuranceLevel())
-                    .withAuthnAttribute("NSIS_LEVEL", wrapper.getNsisLevel().getName())
-                    .withAuthnAttribute("SUBJECT_NAME_ID", wrapper.getSubjectNameId());
-        }
-        catch (AssertionValidationException e) {
-            log.info("Failed validating assertion: {}",new AssertionWrapper(assertion).toString());
-            auditBuilder.withAuthnAttribute("RESULT", e.getMessage());
-            throw new ExternalException(e);
-        }
-        finally {
-            OIOSAML3Service.getAuditService().auditLog(auditBuilder);
+            catch (AssertionValidationException e) {
+                log.info("Failed validating assertion: {}",new AssertionWrapper(assertion).toString());
+                auditBuilder.withAuthnAttribute("RESULT", e.getMessage());
+                throw new ExternalException(e);
+            }
+            finally {
+                OIOSAML3Service.getAuditService().auditLog(auditBuilder);
+            }
         }
 
         AssertionWrapper assertionWrapper = new AssertionWrapper(assertion);
@@ -150,7 +184,7 @@ public class AssertionHandler extends SAMLHandler {
                 .withAuthnAttribute("SP_SESSION_TIMEOUT", String.valueOf(session.getMaxInactiveInterval())));
 
         // redirect to SESSION_REQUESTED_PATH or to login page if not found
-        String url = StringUtil.defaultIfEmpty(authnRequest.getRequestPath(),
+        String url = StringUtil.defaultIfEmpty(authnRequest != null ? authnRequest.getRequestPath() : null,
                 StringUtil.getUrl(httpServletRequest, OIOSAML3Service.getConfig().getLoginPage()));
 
         OIOSAML3Service.getAuditService().auditLog(AuditRequestUtil
@@ -158,5 +192,19 @@ public class AssertionHandler extends SAMLHandler {
                 .withAuthnAttribute("URL_REDIRECT",url));
 
         httpServletResponse.sendRedirect(url);
+    }
+
+    private Attribute createAttribute(String attributeName, String attributeValue) {
+        Attribute attribute = SamlHelper.build(Attribute.class);
+        attribute.setName(attributeName);
+
+        attribute.setNameFormat("urn:oasis:names:tc:SAML:2.0:attrname-format:basic");
+
+        XSAnyBuilder xsAnyBuilder = new XSAnyBuilder();
+        XSAny value = xsAnyBuilder.buildObject(SAMLConstants.SAML20_NS, AttributeValue.DEFAULT_ELEMENT_LOCAL_NAME, SAMLConstants.SAML20_PREFIX);
+
+        value.setTextContent(attributeValue);
+        attribute.getAttributeValues().add(value);
+        return attribute;
     }
 }

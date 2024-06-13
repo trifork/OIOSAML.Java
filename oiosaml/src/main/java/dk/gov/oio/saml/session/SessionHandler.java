@@ -23,6 +23,7 @@
  */
 package dk.gov.oio.saml.session;
 
+import dk.gov.oio.saml.service.OIOSAML3Service;
 import dk.gov.oio.saml.util.InternalException;
 import javax.servlet.http.HttpSession;
 
@@ -97,7 +98,8 @@ public interface SessionHandler {
      */
     default boolean isAuthenticated(HttpSession session) {
         AuthnRequestWrapper authnRequestWrapper = getAuthnRequest(session);
-        if (null == authnRequestWrapper) {
+        if (null == authnRequestWrapper && !OIOSAML3Service.getConfig().isUnsolicitedSAMLResponseAllowed()) {
+            // No authn request and unsolicited saml responses not allowed
             return false;
         }
         AssertionWrapper assertionWrapper = getAssertion(session);

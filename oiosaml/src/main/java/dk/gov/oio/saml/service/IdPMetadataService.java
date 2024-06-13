@@ -30,19 +30,19 @@ public class IdPMetadataService {
         identityProviders.clear();
     }
 
-    public IdPMetadata getIdPMetadata() throws ExternalException, InternalException {
+    public IdPMetadata getIdPMetadata(String entityID) throws ExternalException, InternalException {
         // This method is needed since we only have one IdP functionality for now.
         Configuration config = OIOSAML3Service.getConfig();
         
-        return getIdPMetadata(config.getIdpEntityID(), config.getIdpMetadataUrl(), config.getIdpMetadataFile());
+        return getIdPMetadata(entityID, config.getIdpMetadataUrl(), config.getIdpMetadataFile());
     }
 
-    public SingleLogoutService getLogoutEndpoint() throws InternalException, ExternalException {
-        return getIdPMetadata().getLogoutEndpoint();
+    public SingleLogoutService getLogoutEndpoint(String entityID) throws InternalException, ExternalException {
+        return getIdPMetadata(entityID).getLogoutEndpoint();
     }
 
-    public String getLogoutResponseEndpoint() throws InternalException, ExternalException {
-        return getIdPMetadata().getLogoutResponseEndpoint();
+    public String getLogoutResponseEndpoint(String entityID) throws InternalException, ExternalException {
+        return getIdPMetadata(entityID).getLogoutResponseEndpoint();
     }
 
     private IdPMetadata getIdPMetadata(String idpEntityID, String idpMetadataURL, String idpMetadataFilePath) throws InternalException, ExternalException {

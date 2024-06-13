@@ -37,6 +37,7 @@ import org.opensaml.xmlsec.signature.support.SignatureException;
 import org.opensaml.xmlsec.signature.support.SignatureValidator;
 
 import dk.gov.oio.saml.config.Configuration;
+import dk.gov.oio.saml.model.IdPMetadata;
 import dk.gov.oio.saml.model.NSISLevel;
 import dk.gov.oio.saml.service.IdPMetadataService;
 import dk.gov.oio.saml.service.OIOSAML3Service;
@@ -272,6 +273,10 @@ public class AssertionValidationService {
     }
 
     private void validateInResponseTo(Response response, AuthnRequestWrapper authnRequest) throws AssertionValidationException {
+        if (authnRequest == null) {
+            // Unsolicited saml response
+            return;
+        }
         if (!java.util.Objects.equals(authnRequest.getId(), response.getInResponseTo())) {
             throw new AssertionValidationException("InResponseTo does not match AuthnRequest ID. Expected: " + authnRequest.getId() + " Was: " + response.getInResponseTo());
         }
@@ -279,7 +284,9 @@ public class AssertionValidationService {
 
     private void validateSignature(Assertion assertion) throws ExternalException, InternalException, AssertionValidationException {
         // Get Signing credential
-        X509Certificate x509Certificate = IdPMetadataService.getInstance().getIdPMetadata().getValidX509Certificate(UsageType.SIGNING);
+        String entityID = assertion.getIssuer().getValue();
+        IdPMetadata idPMetadata = IdPMetadataService.getInstance().getIdPMetadata(entityID);
+        X509Certificate x509Certificate = idPMetadata.getValidX509Certificate(UsageType.SIGNING);
         BasicX509Credential credential = new BasicX509Credential(x509Certificate);
 
         // Validate Signature
@@ -420,10 +427,10 @@ public class AssertionValidationService {
         // Validate that we know the issuer
         String value = issuer.getValue();
         IdPMetadataService idPMetadataService = IdPMetadataService.getInstance();
-        String idpEntityID = idPMetadataService.getIdPMetadata().getEntityDescriptor().getEntityID();
+        String idpEntityID = idPMetadataService.getIdPMetadata(value).getEntityDescriptor().getEntityID();
 
         if (value == null || "".equals(value) || !Objects.equals(value, idpEntityID)) {
-            throw new AssertionValidationException("Issuer does not match IdP EntityID from metadata");
+            throw new AssertionValidationException("Issuer does not match a known IdP EntityID from metadata");
         }
     }
 }

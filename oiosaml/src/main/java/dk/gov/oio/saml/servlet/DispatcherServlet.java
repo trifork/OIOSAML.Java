@@ -85,6 +85,11 @@ public class DispatcherServlet extends HttpServlet {
             configuration.setContactEmail(value);
         }
         
+        value = config.get(Constants.UNSOLICITED_SAML_RESPONSE_ALLOWED);
+        if (StringUtil.isNotEmpty(value)) {
+            configuration.setUnsolicitedSAMLResponseAllowed("true".equals(value));
+        }
+
         value = config.get(Constants.ERROR_PAGE);
         if (StringUtil.isNotEmpty(value)) {
             configuration.setErrorPage(value);

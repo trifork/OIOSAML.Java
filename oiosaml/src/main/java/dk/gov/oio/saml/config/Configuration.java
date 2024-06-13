@@ -32,6 +32,7 @@ public class Configuration {
     private boolean isAssuranceLevelAllowed = false;
     private int minimumAssuranceLevel = 3;
     private String contactEmail;
+    private boolean isUnsolicitedSAMLResponseAllowed = false;
 
     // Metadata configuration
     private String idpEntityID; // This IdP's EntityID
@@ -111,6 +112,14 @@ public class Configuration {
         this.contactEmail = contactEmail;
     }
 
+    public void setUnsolicitedSAMLResponseAllowed(boolean unsolicitedSAMLResponseAllowed) {
+        this.isUnsolicitedSAMLResponseAllowed = unsolicitedSAMLResponseAllowed;
+    }
+
+    public boolean isUnsolicitedSAMLResponseAllowed() {
+        return isUnsolicitedSAMLResponseAllowed;
+    }
+    
     public String getIdpEntityID() {
         return idpEntityID;
     }

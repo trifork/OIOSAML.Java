@@ -86,6 +86,9 @@ public class IdPMetadata {
 
         try {
             EntityDescriptor entityDescriptor = resolver.resolveSingle(criteriaSet);
+            if (entityDescriptor == null) {
+                throw new ExternalException("IdP entityID not found in metadata");
+            }
             return entityDescriptor;
         } catch (ResolverException e) {
             throw new InternalException("Configured entityID not found in metadata", e);
@@ -163,7 +166,9 @@ public class IdPMetadata {
                 return singleLogoutService;
             }
         }
-        throw new ExternalException("Could not find SLO endpoint for Redirect binding in metadata");
+        // throw new ExternalException("Could not find SLO endpoint for Redirect binding in metadata");
+        // In connection with unsolicited saml assertions, there might not be a SLO endpoint
+        return null;
     }
 
     public String getLogoutResponseEndpoint() throws InternalException, ExternalException {

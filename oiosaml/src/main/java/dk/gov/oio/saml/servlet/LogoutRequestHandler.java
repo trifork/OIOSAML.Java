@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.opensaml.core.xml.io.MarshallingException;
 import org.opensaml.saml.saml2.core.SessionIndex;
+import org.opensaml.saml.saml2.metadata.SingleLogoutService;
 import org.opensaml.core.config.InitializationException;
 import org.opensaml.messaging.context.MessageContext;
 import org.opensaml.messaging.encoder.MessageEncodingException;
@@ -110,7 +111,24 @@ public class LogoutRequestHandler extends SAMLHandler {
         // Send LogoutRequest to IdP only if the session actually has an authenticated user on it
         log.debug("Send LogoutRequest to IdP");
         try {
-            String location = IdPMetadataService.getInstance().getLogoutEndpoint().getLocation();
+            String entityID = assertion.getIssuer();
+            SingleLogoutService logoutEndpoint = IdPMetadataService.getInstance().getLogoutEndpoint(entityID);
+
+            if (logoutEndpoint == null) {
+                // In connection with unsolicited saml assertions, there might not be an SLO endpoint
+                // Just forward to front-page
+                Configuration config = OIOSAML3Service.getConfig();
+                String url = StringUtil.getUrl(httpServletRequest, config.getLogoutPage());
+
+                // Invalidate current http session - remove all data
+                httpServletRequest.getSession().invalidate();
+
+                log.info("No SLO endpoint, redirecting to " + url);
+                httpServletResponse.sendRedirect(url);
+                return;
+            }
+
+            String location = logoutEndpoint.getLocation();
 
             MessageContext<SAMLObject> messageContext = LogoutRequestService.createMessageWithLogoutRequest(assertion.getSubjectNameId(), assertion.getSubjectNameIdFormat(), location, assertion.getSessionIndex());
             LogoutRequestWrapper logoutRequest = new LogoutRequestWrapper(getSamlObject(messageContext, LogoutRequest.class));
@@ -204,7 +222,7 @@ public class LogoutRequestHandler extends SAMLHandler {
         // Create LogoutResponse
         try {
             IdPMetadataService metadataService = IdPMetadataService.getInstance();
-            String logoutResponseEndpoint = metadataService.getLogoutResponseEndpoint(); // Has to be from the specific IdP that verified the user
+            String logoutResponseEndpoint = metadataService.getLogoutResponseEndpoint(logoutRequest.getIssuerAsString()); // Has to be from the specific IdP that verified the user
             MessageContext<SAMLObject> messageContext = LogoutResponseService.createMessageWithLogoutResponse(logoutRequest, logoutResponseEndpoint);
 
             // Log LogoutRequest

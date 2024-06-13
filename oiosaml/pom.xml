@@ -27,9 +27,8 @@
     </developers>
 
     <scm>
-        <connection>scm:git@github.com:trifork/OIOSAML.Java.git</connection>
-        <developerConnection>scm:git@github.com:trifork/OIOSAML.Java.git</developerConnection>
-        <url>scm:git:ssh://github.com:trifork/OIOSAML.Java.git</url>
+        <connection>scm:git:git@github.com:trifork/OIOSAML.Java.git</connection>
+        <developerConnection>scm:git:git@github.com:trifork/OIOSAML.Java.git</developerConnection>
     </scm>
 
     <properties>

@@ -27,9 +27,9 @@
     </developers>
 
     <scm>
-        <connection>scm:git@github.com:digst/OIOSAML.Java.git</connection>
-        <developerConnection>scm:git@github.com:digst/OIOSAML.Java.git</developerConnection>
-        <url>scm:git:ssh://github.com:digst/OIOSAML.Java.git</url>
+        <connection>scm:git@github.com:trifork/OIOSAML.Java.git</connection>
+        <developerConnection>scm:git@github.com:trifork/OIOSAML.Java.git</developerConnection>
+        <url>scm:git:ssh://github.com:trifork/OIOSAML.Java.git</url>
     </scm>
 
     <properties>
@@ -69,6 +69,11 @@
 
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-release-plugin</artifactId>
+                <version>3.0.1</version>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -246,14 +251,17 @@
     </dependencies>
 
     <distributionManagement>
-        <snapshotRepository>
-            <id>ossrh</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-        </snapshotRepository>
         <repository>
-            <id>ossrh</id>
-            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+                <id>trifork.releases</id>
+                <name>Trifork Releases</name>
+                <url>https://ci.fmk.netic.dk/nexus/content/repositories/releases/</url>
+                <layout>default</layout>
         </repository>
+        <snapshotRepository>
+                <id>trifork.snapshots</id>
+                <name>Trifork Snapshots</name>
+                <url>https://ci.fmk.netic.dk/nexus/content/repositories/snapshots/</url>
+                <layout>default</layout>
+        </snapshotRepository>
     </distributionManagement>
-
 </project>

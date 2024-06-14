@@ -1,12 +1,10 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>dk.digst</groupId>
     <artifactId>oiosaml3.java</artifactId>
     <name>OIOSAML for Java v3</name>
     <packaging>jar</packaging>
-    <version>3.2.2-trifork-2-SNAPSHOT</version>
+    <version>3.2.2-trifork-3-SNAPSHOT</version>
     <description>SAML Servlet Filter, configured to work with the danish SAML profile OIOSAML 3.0.0</description>
     <url>https://digitaliser.dk/group/42063/resources</url>
 

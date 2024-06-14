@@ -1,4 +1,6 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>dk.digst</groupId>
     <artifactId>oiosaml3.java</artifactId>
@@ -27,8 +29,8 @@
     <scm>
         <connection>scm:git:git@github.com:trifork/OIOSAML.Java.git</connection>
         <developerConnection>scm:git:git@github.com:trifork/OIOSAML.Java.git</developerConnection>
-      <tag>HEAD</tag>
-  </scm>
+        <tag>HEAD</tag>
+    </scm>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -38,30 +40,30 @@
         <jaxb.version>2.3.9</jaxb.version>
         <opensaml.version>3.4.6</opensaml.version>
     </properties>
-    
-    <profiles>
-                <profile>
-                        <id>sign</id>
-                        <build>
-                                <plugins>
-                                        <plugin>
-                                                <groupId>org.apache.maven.plugins</groupId>
-                                                <artifactId>maven-gpg-plugin</artifactId>
-                                                <version>1.5</version>
-                                                <executions>
-                                                        <execution>
-                                                                <id>sign-artifacts</id>
-                                                                <phase>verify</phase>
-                                                                <goals>
-                                                                        <goal>sign</goal>
-                                                                </goals>
-                                                        </execution>
-                                                </executions>
-                                        </plugin>
-                                </plugins>
-                        </build>
 
-                </profile>
+    <profiles>
+        <profile>
+            <id>sign</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>1.5</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+
+        </profile>
     </profiles>
 
 
@@ -91,7 +93,7 @@
                     <downloadJavadocs>true</downloadJavadocs>
                 </configuration>
             </plugin>
-            
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
@@ -105,7 +107,7 @@
                     </execution>
                 </executions>
             </plugin>
-            
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
@@ -149,6 +151,17 @@
             <groupId>org.opensaml</groupId>
             <artifactId>opensaml-security-api</artifactId>
             <version>${opensaml.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.bouncycastle</groupId>
+                    <artifactId>bcprov-jdk15on</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcprov-jdk18on</artifactId>
+            <version>1.78.1</version>
         </dependency>
 
         <dependency>
@@ -250,16 +263,16 @@
 
     <distributionManagement>
         <repository>
-                <id>trifork.releases</id>
-                <name>Trifork Releases</name>
-                <url>https://ci.fmk.netic.dk/nexus/content/repositories/releases/</url>
-                <layout>default</layout>
+            <id>trifork.releases</id>
+            <name>Trifork Releases</name>
+            <url>https://ci.fmk.netic.dk/nexus/content/repositories/releases/</url>
+            <layout>default</layout>
         </repository>
         <snapshotRepository>
-                <id>trifork.snapshots</id>
-                <name>Trifork Snapshots</name>
-                <url>https://ci.fmk.netic.dk/nexus/content/repositories/snapshots/</url>
-                <layout>default</layout>
+            <id>trifork.snapshots</id>
+            <name>Trifork Snapshots</name>
+            <url>https://ci.fmk.netic.dk/nexus/content/repositories/snapshots/</url>
+            <layout>default</layout>
         </snapshotRepository>
     </distributionManagement>
 </project>

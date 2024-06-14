@@ -33,6 +33,7 @@ public class Configuration {
     private int minimumAssuranceLevel = 3;
     private String contactEmail;
     private boolean isUnsolicitedSAMLResponseAllowed = false;
+    private boolean isEndpointURIValidationEnabled = true;
 
     // Metadata configuration
     private String idpEntityID; // This IdP's EntityID
@@ -120,6 +121,14 @@ public class Configuration {
         return isUnsolicitedSAMLResponseAllowed;
     }
     
+    public void setEndpointUriValidationEnabled(boolean endpointURIValidationEnabled) {
+        this.isEndpointURIValidationEnabled = endpointURIValidationEnabled;
+    }
+
+    public boolean isEndpointURIValidationEnabled() {
+        return this.isEndpointURIValidationEnabled;
+    }
+
     public String getIdpEntityID() {
         return idpEntityID;
     }

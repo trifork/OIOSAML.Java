@@ -90,6 +90,11 @@ public class DispatcherServlet extends HttpServlet {
             configuration.setUnsolicitedSAMLResponseAllowed("true".equals(value));
         }
 
+        value = config.get(Constants.ENDPOINT_URI_VALIDATION_ENABLED);
+        if (StringUtil.isNotEmpty(value)) {
+            configuration.setEndpointUriValidationEnabled("true".equals(value));
+        }
+
         value = config.get(Constants.ERROR_PAGE);
         if (StringUtil.isNotEmpty(value)) {
             configuration.setErrorPage(value);

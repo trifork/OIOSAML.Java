@@ -52,7 +52,9 @@ public class AssertionValidationService {
     private static final Logger log = LoggerFactory.getLogger(AssertionValidationService.class);
 
     public void validate(HttpServletRequest httpServletRequest, MessageContext<SAMLObject> messageContext, Response response, Assertion assertion, AuthnRequestWrapper authnRequest) throws AssertionValidationException, InternalException, ExternalException {
-        validateDestination(httpServletRequest, messageContext);
+        if (OIOSAML3Service.getConfig().isEndpointURIValidationEnabled()) {
+            validateDestination(httpServletRequest, messageContext);
+        }
         validateLifetime(messageContext, response, assertion);
         validateResponse(response, authnRequest);
         validateAssertion(assertion, authnRequest);

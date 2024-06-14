@@ -24,6 +24,7 @@ public class Constants {
     public static final String METADATA_NAMEID_FORMAT = "oiosaml.servlet.metadata.nameid.format";
     public static final String METADATA_CONTACT_EMAIL = "oiosaml.servlet.metadata.contact.email";
     public static final String UNSOLICITED_SAML_RESPONSE_ALLOWED = "oiosaml.servlet.unsolicited.saml.response.allowed";
+    public static final String ENDPOINT_URI_VALIDATION_ENABLED = "oiosaml.servlet.endpoint.uri.validation.enabled";
     public static final String IDP_METADATA_MIN_REFRESH = "oiosaml.servlet.idp.metadata.refresh.min";
     public static final String IDP_METADATA_MAX_REFRESH = "oiosaml.servlet.idp.metadata.refresh.max";
     public static final String SECONDARY_KEYSTORE_LOCATION = "oiosaml.servlet.secondary.keystore.location";

@@ -95,6 +95,11 @@ public class DispatcherServlet extends HttpServlet {
             configuration.setEndpointUriValidationEnabled("true".equals(value));
         }
 
+        value = config.get(Constants.MESSAGE_LIFETIME_VALIDATION_ENABLED);
+        if (StringUtil.isNotEmpty(value)) {
+            configuration.setMessageLifetimeValidationEnabled("true".equals(value));
+        }
+
         value = config.get(Constants.ERROR_PAGE);
         if (StringUtil.isNotEmpty(value)) {
             configuration.setErrorPage(value);

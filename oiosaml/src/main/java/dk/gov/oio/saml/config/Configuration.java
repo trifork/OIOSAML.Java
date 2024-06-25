@@ -34,6 +34,7 @@ public class Configuration {
     private String contactEmail;
     private boolean isUnsolicitedSAMLResponseAllowed = false;
     private boolean isEndpointURIValidationEnabled = true;
+    private boolean isMessageLifetimeValidationEnabled = true;
 
     // Metadata configuration
     private String idpEntityID; // This IdP's EntityID
@@ -127,6 +128,14 @@ public class Configuration {
 
     public boolean isEndpointURIValidationEnabled() {
         return this.isEndpointURIValidationEnabled;
+    }
+
+    public void setMessageLifetimeValidationEnabled(boolean messageLifetimeValidationEnabled) {
+        this.isMessageLifetimeValidationEnabled = messageLifetimeValidationEnabled;
+    }
+
+    public boolean isMessageLifetimeValidationEnabled() {
+        return isMessageLifetimeValidationEnabled;
     }
 
     public String getIdpEntityID() {

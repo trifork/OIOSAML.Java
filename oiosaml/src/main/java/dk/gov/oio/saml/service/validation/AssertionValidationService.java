@@ -90,6 +90,7 @@ public class AssertionValidationService {
         try {
             lifetimeHandler = new MessageLifetimeSecurityHandler();
             lifetimeHandler.setClockSkew(1000L * 60 * clockSkew);
+            lifetimeHandler.setRequiredRule(OIOSAML3Service.getConfig().isMessageLifetimeValidationEnabled());
             lifetimeHandler.initialize();
             lifetimeHandler.invoke(messageContext);
         } catch (ComponentInitializationException e) {
@@ -100,12 +101,6 @@ public class AssertionValidationService {
             if (lifetimeHandler != null && lifetimeHandler.isInitialized() && !lifetimeHandler.isDestroyed()) {
                 lifetimeHandler.destroy();
             }
-        }
-
-        //Check Response Issue instant
-        DateTime responseIssueInstant = response.getIssueInstant();
-        if (responseIssueInstant.isBefore(DateTime.now().minusMinutes(clockSkew))) {
-            throw new AssertionValidationException("Response Lifetime incorrect");
         }
 
         //Check Assertion Issue instant

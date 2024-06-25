@@ -295,7 +295,10 @@ public class InMemorySessionHandler implements SessionHandler {
         }
 
         TimeOutWrapper<AssertionWrapper> wrapperTimeOutWrapper = assertions.get(sessionId);
-        sessionIndexMap.remove(wrapperTimeOutWrapper.getObject().getSessionIndex());
+        String sessionIndex = wrapperTimeOutWrapper.getObject().getSessionIndex();
+        if (sessionIndex != null) {
+            sessionIndexMap.remove(sessionIndex);
+        }
         assertions.remove(sessionId);
     }
 }

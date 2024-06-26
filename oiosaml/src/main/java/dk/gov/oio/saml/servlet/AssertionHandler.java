@@ -175,8 +175,9 @@ public class AssertionHandler extends SAMLHandler {
         }
 
         AssertionWrapper assertionWrapper = new AssertionWrapper(assertion);
+        httpServletRequest.getSession(true);
 
-        sessionHandler.storeAssertion(session, assertionWrapper);
+        session = sessionHandler.storeAssertion(session, assertionWrapper, httpServletRequest);
 
         OIOSAML3Service.getAuditService().auditLog(AuditRequestUtil
                 .createBasicAuditBuilder(httpServletRequest, "BSA7", "CreateSession")

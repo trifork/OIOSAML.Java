@@ -34,6 +34,7 @@ import dk.gov.oio.saml.util.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -85,10 +86,10 @@ public class InMemorySessionHandler implements SessionHandler {
      * @param assertion {@link AssertionWrapper}
      */
     @Override
-    public void storeAssertion(HttpSession session, AssertionWrapper assertion) {
+    public HttpSession storeAssertion(HttpSession session, AssertionWrapper assertion, HttpServletRequest httpRequest) {
         if (null == assertion || StringUtil.isEmpty(assertion.getID())) {
             log.warn("Ignore Assertion with null value or missing ID");
-            return;
+            return session;
         }
         if (StringUtil.isEmpty(assertion.getSessionIndex())) {
             log.info("Assertion '{}' with passive session and missing index", assertion.getID());
@@ -114,8 +115,16 @@ public class InMemorySessionHandler implements SessionHandler {
         }
 
         log.debug("Store Assertion '{}'", assertion.getID());
-        assertions.put(getSessionId(session), new TimeOutWrapper<>(assertion));
-        sessionIndexMap.put(StringUtil.defaultIfEmpty(assertion.getSessionIndex(), assertion.getID()), new TimeOutWrapper<>(getSessionId(session)));
+
+        // Replace session now to protect from session fixation attacks
+        session.invalidate();
+        HttpSession newSession = httpRequest.getSession(true);
+        log.info("Renewed session, old={}, new={}", session.getId(), newSession.getId());
+
+        assertions.put(getSessionId(newSession), new TimeOutWrapper<>(assertion));
+        sessionIndexMap.put(StringUtil.defaultIfEmpty(assertion.getSessionIndex(), assertion.getID()), new TimeOutWrapper<>(getSessionId(newSession)));
+
+        return newSession;
     }
 
     /**

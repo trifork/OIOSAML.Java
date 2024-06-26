@@ -80,7 +80,7 @@ public class AssertionHandlerTest {
         assertionHandler.handlePost(request, response);
 
         Mockito.verify(response).sendRedirect("/"); // Verify that handler redirected
-        Mockito.verify(sessionHandler).storeAssertion(Mockito.eq(session), assertionWrapperArgumentCaptor.capture());
+        Mockito.verify(sessionHandler).storeAssertion(Mockito.eq(session), assertionWrapperArgumentCaptor.capture(), request);
 
         Assertions.assertEquals(assertionWrapperArgumentCaptor.getValue().getNsisLevel(), NSISLevel.SUBSTANTIAL);
     }
@@ -127,7 +127,7 @@ public class AssertionHandlerTest {
             assertionHandler.handlePost(request, response);
         });
 
-        Mockito.verify(sessionHandler, Mockito.never()).storeAssertion(Mockito.eq(session), Mockito.any(AssertionWrapper.class));
+        Mockito.verify(sessionHandler, Mockito.never()).storeAssertion(Mockito.eq(session), Mockito.any(AssertionWrapper.class), request);
         Assertions.assertFalse(sessionHandler.isAuthenticated(session));
     }    
 }

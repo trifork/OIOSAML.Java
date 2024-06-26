@@ -178,7 +178,7 @@ class DatabaseSessionHandlerTest {
     @Test
     void testStoreAssertionMissingAssertion() throws Exception {
 
-        sessionHandler.storeAssertion(session, null);
+        sessionHandler.storeAssertion(session, null, null);
 
         // Will never reach biz logic
         Mockito.verify(session, Mockito.never()).getId();
@@ -195,13 +195,13 @@ class DatabaseSessionHandlerTest {
         Assertions.assertNull(assertionWrapperPreOutput);
 
         // input is persisted
-        sessionHandler.storeAssertion(session, assertionWrapperOldInput);
+        sessionHandler.storeAssertion(session, assertionWrapperOldInput, null);
 
         AssertionWrapper assertionWrapperOldOutput = sessionHandler.getAssertion(session);
         Assertions.assertEquals(assertionWrapperOldInput.getAssertionAsBase64(), assertionWrapperOldOutput.getAssertionAsBase64());
 
         // input is replaced
-        sessionHandler.storeAssertion(session, assertionWrapperInput);
+        sessionHandler.storeAssertion(session, assertionWrapperInput, null);
 
         AssertionWrapper assertionWrapperOutput = sessionHandler.getAssertion(session);
         Assertions.assertEquals(assertionWrapperInput.getAssertionAsBase64(), assertionWrapperOutput.getAssertionAsBase64());
@@ -212,7 +212,7 @@ class DatabaseSessionHandlerTest {
     void testStoreAssertionGetSessionIndex() throws Exception {
         AssertionWrapper assertionWrapperInput = new AssertionWrapper(createAssertion());
 
-        sessionHandler.storeAssertion(session, assertionWrapperInput);
+        sessionHandler.storeAssertion(session, assertionWrapperInput, null);
 
         AssertionWrapper assertionWrapperOutput = sessionHandler.getAssertion(assertionWrapperInput.getSessionIndex());
         Assertions.assertNotNull(assertionWrapperInput.getSessionIndex());
@@ -231,7 +231,7 @@ class DatabaseSessionHandlerTest {
     void testStoreAssertionTimeout() throws Exception {
         AssertionWrapper assertionWrapperInput = new AssertionWrapper(createAssertion());
 
-        sessionHandler.storeAssertion(session, assertionWrapperInput);
+        sessionHandler.storeAssertion(session, assertionWrapperInput, null);
         sessionHandler.cleanup(-1);
 
         AssertionWrapper assertionWrapperOutput = sessionHandler.getAssertion(session);
@@ -243,7 +243,7 @@ class DatabaseSessionHandlerTest {
     void testStoreAssertionTimeoutSessionIndex() throws Exception {
         AssertionWrapper assertionWrapperInput = new AssertionWrapper(createAssertion());
 
-        sessionHandler.storeAssertion(session, assertionWrapperInput);
+        sessionHandler.storeAssertion(session, assertionWrapperInput, null);
         sessionHandler.cleanup(-1);
 
         AssertionWrapper assertionWrapperOutput = sessionHandler.getAssertion(assertionWrapperInput.getSessionIndex());
@@ -256,10 +256,10 @@ class DatabaseSessionHandlerTest {
     void testStoreAssertionReplay() throws Exception {
         AssertionWrapper assertionWrapperInput = new AssertionWrapper(createAssertion());
 
-        sessionHandler.storeAssertion(session, assertionWrapperInput);
+        sessionHandler.storeAssertion(session, assertionWrapperInput, null);
 
         Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-            sessionHandler.storeAssertion(session, assertionWrapperInput);
+            sessionHandler.storeAssertion(session, assertionWrapperInput, null);
         });
         Assertions.assertEquals(String.format("Assertion with id '%s' and session index '%s' is already registered",assertionWrapperInput.getID(), assertionWrapperInput.getSessionIndex()), exception.getMessage());
     }
@@ -318,7 +318,7 @@ class DatabaseSessionHandlerTest {
     void testLogout() throws Exception {
         AssertionWrapper assertionWrapperInput = new AssertionWrapper(createAssertion());
 
-        sessionHandler.storeAssertion(session, assertionWrapperInput);
+        sessionHandler.storeAssertion(session, assertionWrapperInput, null);
         sessionHandler.logout(session,assertionWrapperInput);
 
         AssertionWrapper assertionWrapperOutput = sessionHandler.getAssertion(session);
@@ -331,7 +331,7 @@ class DatabaseSessionHandlerTest {
         AssertionWrapper assertionWrapperWrong = new AssertionWrapper(createAssertion());
         AssertionWrapper assertionWrapperInput = new AssertionWrapper(createAssertion());
 
-        sessionHandler.storeAssertion(session, assertionWrapperInput);
+        sessionHandler.storeAssertion(session, assertionWrapperInput, null);
 
         AssertionWrapper assertionWrapperOutput = sessionHandler.getAssertion(session);
         Assertions.assertNotNull(assertionWrapperOutput);
@@ -351,8 +351,8 @@ class DatabaseSessionHandlerTest {
         HttpSession sessionUser = Mockito.mock(HttpSession.class);
         Mockito.when(sessionUser.getId()).thenReturn("USER_SESSION_ID");
 
-        sessionHandler.storeAssertion(sessionUser, assertionWrapperInputSession);
-        sessionHandler.storeAssertion(session, assertionWrapperInput);
+        sessionHandler.storeAssertion(sessionUser, assertionWrapperInputSession, null);
+        sessionHandler.storeAssertion(session, assertionWrapperInput, null);
 
         AssertionWrapper assertionWrapperOutput = sessionHandler.getAssertion(session);
         Assertions.assertNotNull(assertionWrapperOutput);
@@ -377,7 +377,7 @@ class DatabaseSessionHandlerTest {
         HttpSession sessionUser = Mockito.mock(HttpSession.class);
         Mockito.when(sessionUser.getId()).thenReturn("USER_SESSION_ID");
 
-        sessionHandler.storeAssertion(sessionUser, assertionWrapperInput);
+        sessionHandler.storeAssertion(sessionUser, assertionWrapperInput, null);
 
         AssertionWrapper assertionWrapperOutput = sessionHandler.getAssertion(sessionUser);
         Assertions.assertNotNull(assertionWrapperOutput);

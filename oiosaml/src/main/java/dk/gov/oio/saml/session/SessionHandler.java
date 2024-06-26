@@ -25,6 +25,8 @@ package dk.gov.oio.saml.session;
 
 import dk.gov.oio.saml.service.OIOSAML3Service;
 import dk.gov.oio.saml.util.InternalException;
+
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 /**
@@ -51,9 +53,11 @@ public interface SessionHandler {
      * Set Assertion on the current session
      * @param session HTTP session
      * @param assertion {@link AssertionWrapper}
+     * @param httpServletRequest 
+     * @return 
      * @throws InternalException on failure to persist assertion
      */
-    void storeAssertion(HttpSession session, AssertionWrapper assertion) throws InternalException;
+    HttpSession storeAssertion(HttpSession session, AssertionWrapper assertion, HttpServletRequest httpServletRequest) throws InternalException;
 
     /**
      * Set LogoutRequest on the current session

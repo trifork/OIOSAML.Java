@@ -38,6 +38,7 @@ import org.opensaml.saml.saml2.core.LogoutRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.sql.DataSource;
 import java.io.StringReader;
@@ -104,10 +105,10 @@ public class DatabaseSessionHandler implements SessionHandler {
      * @throws InternalException on failure to persist request
      */
     @Override
-    public void storeAssertion(HttpSession session, AssertionWrapper assertion) throws InternalException {
+    public HttpSession storeAssertion(HttpSession session, AssertionWrapper assertion, HttpServletRequest httpRequest) throws InternalException {
         if (null == assertion || StringUtil.isEmpty(assertion.getID())) {
             log.warn("Ignore Assertion with null value or missing ID");
-            return;
+            return session;
         }
         if (StringUtil.isEmpty(assertion.getSessionIndex())) {
             log.info("Assertion '{}' with passive session and missing index", assertion.getID());
@@ -161,6 +162,8 @@ public class DatabaseSessionHandler implements SessionHandler {
             log.error("Failure to persist assertion", e);
             throw new InternalException("Failure to persist assertion", e);
         }
+
+        return session;
     }
 
     /**

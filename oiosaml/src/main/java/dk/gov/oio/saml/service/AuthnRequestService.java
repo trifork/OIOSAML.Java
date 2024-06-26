@@ -1,21 +1,12 @@
 package dk.gov.oio.saml.service;
 
-import dk.gov.oio.saml.config.Configuration;
-import dk.gov.oio.saml.extensions.appswitch.AppSwitch;
-import dk.gov.oio.saml.extensions.appswitch.AppSwitchPlatform;
-import dk.gov.oio.saml.extensions.appswitch.Platform;
-import dk.gov.oio.saml.extensions.appswitch.ReturnURL;
-import dk.gov.oio.saml.model.NSISLevel;
-import dk.gov.oio.saml.util.Constants;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.lang.StringUtils;
-import org.opensaml.saml.saml2.core.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.joda.time.DateTime;
 import org.opensaml.core.config.InitializationException;
 import org.opensaml.messaging.context.MessageContext;
@@ -26,12 +17,30 @@ import org.opensaml.saml.common.messaging.context.SAMLEndpointContext;
 import org.opensaml.saml.common.messaging.context.SAMLPeerEntityContext;
 import org.opensaml.saml.common.xml.SAMLConstants;
 import org.opensaml.saml.saml2.binding.decoding.impl.HTTPRedirectDeflateDecoder;
+import org.opensaml.saml.saml2.core.AuthnContextClassRef;
+import org.opensaml.saml.saml2.core.AuthnContextComparisonTypeEnumeration;
+import org.opensaml.saml.saml2.core.AuthnRequest;
+import org.opensaml.saml.saml2.core.Extensions;
+import org.opensaml.saml.saml2.core.IDPEntry;
+import org.opensaml.saml.saml2.core.IDPList;
+import org.opensaml.saml.saml2.core.Issuer;
+import org.opensaml.saml.saml2.core.RequestedAuthnContext;
+import org.opensaml.saml.saml2.core.Scoping;
 import org.opensaml.saml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml.saml2.metadata.IDPSSODescriptor;
 import org.opensaml.saml.saml2.metadata.SingleSignOnService;
 import org.opensaml.xmlsec.SignatureSigningParameters;
 import org.opensaml.xmlsec.context.SecurityParametersContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import dk.gov.oio.saml.config.Configuration;
+import dk.gov.oio.saml.extensions.appswitch.AppSwitch;
+import dk.gov.oio.saml.extensions.appswitch.AppSwitchPlatform;
+import dk.gov.oio.saml.extensions.appswitch.Platform;
+import dk.gov.oio.saml.extensions.appswitch.ReturnURL;
+import dk.gov.oio.saml.model.NSISLevel;
+import dk.gov.oio.saml.util.Constants;
 import dk.gov.oio.saml.util.ExternalException;
 import dk.gov.oio.saml.util.InternalException;
 import dk.gov.oio.saml.util.SamlHelper;
@@ -83,6 +92,9 @@ public class AuthnRequestService {
             selectedIdp = OIOSAML3Service.getConfig().getIdpEntityID();
         }
         String[] idpList = selectedIdp.split(" ");
+
+        log.debug("Selected IdP: {}, IdP scoping: {}", idpList[0], idpList.length > 1 ? idpList[1] : "(none)");
+
         String destination = getDestination(idpList[0]);
         String scope = idpList.length > 1 ? idpList[1] : null;
 

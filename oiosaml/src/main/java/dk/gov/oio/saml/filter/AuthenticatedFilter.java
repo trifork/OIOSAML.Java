@@ -1,6 +1,8 @@
 package dk.gov.oio.saml.filter;
 
 import java.io.IOException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import javax.servlet.Filter;
@@ -97,7 +99,7 @@ public class AuthenticatedFilter implements Filter {
                     cookies = new Cookie[0];
                 }
                 Cookie selectedIdp = Arrays.asList(cookies).stream().filter(c -> "_saml_idp".equals(c.getName())).findAny().orElse(null);
-                String entityID = selectedIdp != null ? selectedIdp.getValue() : null;
+                String entityID = selectedIdp != null ? URLDecoder.decode(selectedIdp.getValue(), StandardCharsets.UTF_8.name()) : null;
                 MessageContext<SAMLObject> authnRequest = authnRequestService.createMessageWithAuthnRequest(isPassive, forceAuthn, requiredNsisLevel, attributeProfile, appSwitchPlatform, entityID);
 
                 //Audit logging

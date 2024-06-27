@@ -180,7 +180,7 @@ public class DispatcherServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
         if (log.isDebugEnabled()) {
-            log.debug("Received GET ({}{})", req.getServletPath(), req.getContextPath());
+            log.debug("Received GET ({})", req.getRequestURI());
         }
 
         if (!initialized) {
@@ -216,7 +216,7 @@ public class DispatcherServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
         if (log.isDebugEnabled()) {
-            log.debug("Received GET ({}{})", req.getServletPath(), req.getContextPath());
+            log.debug("Received POST ({})", req.getRequestURI());
         }
 
         if (!initialized) {

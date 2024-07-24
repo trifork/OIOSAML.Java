@@ -1,13 +1,14 @@
 package dk.gov.oio.saml.extensions.appswitch;
 
-import org.opensaml.core.xml.XMLObject;
-import org.opensaml.saml.common.AbstractSAMLObject;
+import java.util.List;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.List;
 
-public class ReturnURLImpl extends AbstractSAMLObject implements ReturnURL {
+import org.opensaml.core.xml.AbstractXMLObject;
+import org.opensaml.core.xml.XMLObject;
+
+public class ReturnURLImpl extends AbstractXMLObject implements ReturnURL {
     private String returnURL;
 
     protected ReturnURLImpl(@Nullable String namespaceURI, @Nonnull String elementLocalName, @Nullable String namespacePrefix) {

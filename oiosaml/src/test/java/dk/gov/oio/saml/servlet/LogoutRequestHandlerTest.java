@@ -1,29 +1,23 @@
 package dk.gov.oio.saml.servlet;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.zip.Deflater;
 import java.util.zip.DeflaterOutputStream;
 
-import javax.servlet.ServletInputStream;
-import javax.servlet.ServletOutputStream;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-
-import dk.gov.oio.saml.session.AssertionWrapper;
-import dk.gov.oio.saml.session.SessionHandler;
-import dk.gov.oio.saml.util.*;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
+import org.opensaml.core.xml.XMLObject;
 import org.opensaml.core.xml.util.XMLObjectSupport;
 import org.opensaml.messaging.context.MessageContext;
-import org.opensaml.saml.common.SAMLObject;
 import org.opensaml.saml.saml2.core.LogoutRequest;
 import org.opensaml.saml.saml2.core.LogoutResponse;
 import org.opensaml.saml.saml2.core.NameID;
@@ -32,8 +26,21 @@ import org.w3c.dom.Element;
 
 import dk.gov.oio.saml.model.NSISLevel;
 import dk.gov.oio.saml.service.OIOSAML3Service;
-import net.shibboleth.utilities.java.support.codec.Base64Support;
-import net.shibboleth.utilities.java.support.xml.SerializeSupport;
+import dk.gov.oio.saml.session.AssertionWrapper;
+import dk.gov.oio.saml.session.SessionHandler;
+import dk.gov.oio.saml.util.ExternalException;
+import dk.gov.oio.saml.util.IdpUtil;
+import dk.gov.oio.saml.util.InternalException;
+import dk.gov.oio.saml.util.StringUtil;
+import dk.gov.oio.saml.util.TestConstants;
+import jakarta.servlet.ReadListener;
+import jakarta.servlet.ServletInputStream;
+import jakarta.servlet.ServletOutputStream;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+import net.shibboleth.shared.codec.Base64Support;
+import net.shibboleth.shared.xml.SerializeSupport;
 
 public class LogoutRequestHandlerTest {
 
@@ -93,11 +100,11 @@ public class LogoutRequestHandlerTest {
 
         // Create LogoutRequest
         String nameID = "https://data.gov.dk/model/core/eid/person/uuid/37a5a1aa-67ce-4f70-b7c0-b8e678d585f7";
-        MessageContext<SAMLObject> messageContext = IdpUtil.createMessageWithLogoutRequest(nameID, NameID.PERSISTENT, TestConstants.SP_LOGOUT_REQUEST_URL);
-        String sessionIndex = ((LogoutRequest)messageContext.getMessage()).getSessionIndexes().get(0).getSessionIndex();
+        MessageContext messageContext = IdpUtil.createMessageWithLogoutRequest(nameID, NameID.PERSISTENT, TestConstants.SP_LOGOUT_REQUEST_URL);
+        String sessionIndex = ((LogoutRequest)messageContext.getMessage()).getSessionIndexes().get(0).getValue();
 
         // Marshall and serialize
-        Element marshalledMessage = XMLObjectSupport.marshall(messageContext.getMessage());
+        Element marshalledMessage = XMLObjectSupport.marshall((XMLObject) messageContext.getMessage());
         String messageXML = SerializeSupport.nodeToString(marshalledMessage);
 
         // Deflate
@@ -133,7 +140,7 @@ public class LogoutRequestHandlerTest {
         Mockito.when(response.getOutputStream()).thenReturn(outputStreamMock);
 
         // Capture request and parameters
-        ArgumentCaptor<MessageContext<SAMLObject>> contextArgumentCaptor = ArgumentCaptor.forClass(MessageContext.class);
+        ArgumentCaptor<MessageContext> contextArgumentCaptor = ArgumentCaptor.forClass(MessageContext.class);
 
         // Spy test class to capture output
         LogoutRequestHandler logoutRequestHandler = Mockito.spy(new LogoutRequestHandler());
@@ -166,11 +173,11 @@ public class LogoutRequestHandlerTest {
 
         // Create LogoutRequest
         String nameID = "https://data.gov.dk/model/core/eid/person/uuid/37a5a1aa-67ce-4f70-b7c0-b8e678d585f7";
-        MessageContext<SAMLObject> messageContext = IdpUtil.createMessageWithLogoutRequest(nameID, NameID.PERSISTENT, TestConstants.SP_LOGOUT_REQUEST_URL);
-        String sessionIndex = ((LogoutRequest)messageContext.getMessage()).getSessionIndexes().get(0).getSessionIndex();
+        MessageContext messageContext = IdpUtil.createMessageWithLogoutRequest(nameID, NameID.PERSISTENT, TestConstants.SP_LOGOUT_REQUEST_URL);
+        String sessionIndex = ((LogoutRequest)messageContext.getMessage()).getSessionIndexes().get(0).getValue();
 
         // Marshall and serialize
-        Element marshalledMessage = XMLObjectSupport.marshall(messageContext.getMessage());
+        Element marshalledMessage = XMLObjectSupport.marshall((XMLObject) messageContext.getMessage());
         final String soapXml = "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\"><soapenv:Body>" +
                 StringUtil.elementToString(marshalledMessage) + "</soapenv:Body></soapenv:Envelope>";
 
@@ -195,6 +202,21 @@ public class LogoutRequestHandlerTest {
             public int read() throws IOException {
                 return inputStream.read();
             }
+
+            @Override
+            public boolean isFinished() {
+                throw new UnsupportedOperationException("Unimplemented method 'isFinished'");
+            }
+
+            @Override
+            public boolean isReady() {
+                throw new UnsupportedOperationException("Unimplemented method 'isReady'");
+            }
+
+            @Override
+            public void setReadListener(ReadListener readListener) {
+                throw new UnsupportedOperationException("Unimplemented method 'setReadListener'");
+            }
         });
 
         // Mock DummyOutputStream
@@ -205,7 +227,7 @@ public class LogoutRequestHandlerTest {
         Mockito.when(response.getOutputStream()).thenReturn(outputStreamMock);
 
         // Capture request and parameters
-        ArgumentCaptor<MessageContext<SAMLObject>> contextArgumentCaptor = ArgumentCaptor.forClass(MessageContext.class);
+        ArgumentCaptor<MessageContext> contextArgumentCaptor = ArgumentCaptor.forClass(MessageContext.class);
 
         // Spy test class to capture output
         LogoutRequestHandler logoutRequestHandler = Mockito.spy(new LogoutRequestHandler());
@@ -263,11 +285,11 @@ public class LogoutRequestHandlerTest {
     public void testSOAPLogoutRequestWhenNotLoggedIn() throws Exception {
         // Create LogoutRequest
         String nameID = "https://data.gov.dk/model/core/eid/person/uuid/37a5a1aa-67ce-4f70-b7c0-b8e678d585f7";
-        MessageContext<SAMLObject> messageContext = IdpUtil.createMessageWithLogoutRequest(nameID, NameID.PERSISTENT, TestConstants.SP_LOGOUT_REQUEST_URL);
-        String sessionIndex = ((LogoutRequest)messageContext.getMessage()).getSessionIndexes().get(0).getSessionIndex();
+        MessageContext messageContext = IdpUtil.createMessageWithLogoutRequest(nameID, NameID.PERSISTENT, TestConstants.SP_LOGOUT_REQUEST_URL);
+        String sessionIndex = ((LogoutRequest)messageContext.getMessage()).getSessionIndexes().get(0).getValue();
 
         // Marshall and serialize
-        Element marshalledMessage = XMLObjectSupport.marshall(messageContext.getMessage());
+        Element marshalledMessage = XMLObjectSupport.marshall((XMLObject) messageContext.getMessage());
         final String soapXml = "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\"><soapenv:Body>" +
                 StringUtil.elementToString(marshalledMessage) + "</soapenv:Body></soapenv:Envelope>";
 
@@ -291,6 +313,21 @@ public class LogoutRequestHandlerTest {
             public int read() throws IOException {
                 return inputStream.read();
             }
+
+            @Override
+            public boolean isFinished() {
+                throw new UnsupportedOperationException("Unimplemented method 'isFinished'");
+            }
+
+            @Override
+            public boolean isReady() {
+                throw new UnsupportedOperationException("Unimplemented method 'isReady'");
+            }
+
+            @Override
+            public void setReadListener(ReadListener readListener) {
+                throw new UnsupportedOperationException("Unimplemented method 'setReadListener'");
+            }
         });
 
         // Mock DummyOutputStream
@@ -301,7 +338,7 @@ public class LogoutRequestHandlerTest {
         Mockito.when(response.getOutputStream()).thenReturn(outputStreamMock);
 
         // Capture request and parameters
-        ArgumentCaptor<MessageContext<SAMLObject>> contextArgumentCaptor = ArgumentCaptor.forClass(MessageContext.class);
+        ArgumentCaptor<MessageContext> contextArgumentCaptor = ArgumentCaptor.forClass(MessageContext.class);
 
         // Spy test class to capture output
         LogoutRequestHandler logoutRequestHandler = Mockito.spy(new LogoutRequestHandler());
@@ -332,11 +369,11 @@ public class LogoutRequestHandlerTest {
     public void testIdPLogoutRequestWhenNotLoggedIn() throws Exception {
         // Create LogoutRequest
         String nameID = "https://data.gov.dk/model/core/eid/person/uuid/37a5a1aa-67ce-4f70-b7c0-b8e678d585f7";
-        MessageContext<SAMLObject> messageContext = IdpUtil.createMessageWithLogoutRequest(nameID, NameID.PERSISTENT, TestConstants.SP_LOGOUT_REQUEST_URL);
-        String sessionIndex = ((LogoutRequest)messageContext.getMessage()).getSessionIndexes().get(0).getSessionIndex();
+        MessageContext messageContext = IdpUtil.createMessageWithLogoutRequest(nameID, NameID.PERSISTENT, TestConstants.SP_LOGOUT_REQUEST_URL);
+        String sessionIndex = ((LogoutRequest)messageContext.getMessage()).getSessionIndexes().get(0).getValue();
 
         // Marshall and serialize
-        Element marshalledMessage = XMLObjectSupport.marshall(messageContext.getMessage());
+        Element marshalledMessage = XMLObjectSupport.marshall((XMLObject) messageContext.getMessage());
         String messageXML = SerializeSupport.nodeToString(marshalledMessage);
 
         // Deflate

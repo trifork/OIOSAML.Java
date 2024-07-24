@@ -7,6 +7,8 @@ import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -14,17 +16,14 @@ import java.util.Set;
 
 import javax.net.ssl.SSLContext;
 
-import dk.gov.oio.saml.util.ResourceUtil;
-import org.apache.http.conn.ssl.NoopHostnameVerifier;
-import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
-import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.ssl.TrustStrategy;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
+import org.apache.hc.client5.http.io.HttpClientConnectionManager;
+import org.apache.hc.client5.http.ssl.NoopHostnameVerifier;
+import org.apache.hc.client5.http.ssl.SSLConnectionSocketFactory;
+import org.apache.hc.client5.http.ssl.TrustSelfSignedStrategy;
 import org.bouncycastle.util.encoders.Base64;
-import org.joda.time.DateTime;
 import org.opensaml.core.config.InitializationException;
 import org.opensaml.core.criterion.EntityIdCriterion;
 import org.opensaml.saml.common.xml.SAMLConstants;
@@ -36,16 +35,19 @@ import org.opensaml.saml.saml2.metadata.IDPSSODescriptor;
 import org.opensaml.saml.saml2.metadata.KeyDescriptor;
 import org.opensaml.saml.saml2.metadata.SingleLogoutService;
 import org.opensaml.security.credential.UsageType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import dk.gov.oio.saml.config.Configuration;
 import dk.gov.oio.saml.service.CRLChecker;
 import dk.gov.oio.saml.service.OIOSAML3Service;
 import dk.gov.oio.saml.util.ExternalException;
 import dk.gov.oio.saml.util.InternalException;
-import net.shibboleth.utilities.java.support.component.ComponentInitializationException;
-import net.shibboleth.utilities.java.support.resolver.CriteriaSet;
-import net.shibboleth.utilities.java.support.resolver.ResolverException;
-import net.shibboleth.utilities.java.support.xml.BasicParserPool;
+import dk.gov.oio.saml.util.ResourceUtil;
+import net.shibboleth.shared.component.ComponentInitializationException;
+import net.shibboleth.shared.resolver.CriteriaSet;
+import net.shibboleth.shared.resolver.ResolverException;
+import net.shibboleth.shared.xml.impl.BasicParserPool;
 
 public class IdPMetadata {
     private static final Logger log = LoggerFactory.getLogger(IdPMetadata.class);
@@ -54,7 +56,7 @@ public class IdPMetadata {
     private List<X509Certificate> validUnspecifiedCertificates = new ArrayList<>();
     private String metadataFilePath;
     private AbstractReloadingMetadataResolver resolver;
-    private DateTime lastCRLCheck;
+    private Instant lastCRLCheck;
     private String entityId;
     private String metadataURL;
 
@@ -186,14 +188,14 @@ public class IdPMetadata {
         throw new ExternalException("Unable to find SingleLogoutService with binding HTTPRedirect and an ResponseLocation");
     }
 
-    public DateTime getLastCRLCheck() {
+    public Instant getLastCRLCheck() {
         return lastCRLCheck;
     }
 
     private void doRevocationCheck() throws ExternalException, InternalException {
         Configuration config = OIOSAML3Service.getConfig();
         if (config.isCRLCheckEnabled() || config.isOcspCheckEnabled()) {
-            DateTime lastUpdate = resolver.getLastUpdate();
+            Instant lastUpdate = resolver.getLastUpdate();
 
             if (lastCRLCheck == null || (lastUpdate != null && lastUpdate.isAfter(lastCRLCheck))) {
                 try {
@@ -224,7 +226,7 @@ public class IdPMetadata {
                         this.validUnspecifiedCertificates.addAll(validNullCertificates);
                     }
 
-                    lastCRLCheck = DateTime.now();
+                    lastCRLCheck = Instant.now();
                 }
                 catch (ExternalException | InternalException | InitializationException e) {
                     log.warn("CRL check failed", e);
@@ -252,10 +254,11 @@ public class IdPMetadata {
 
                 CloseableHttpClient httpClient;
                 if (config.isSupportSelfSigned()) {
-                    TrustStrategy acceptingTrustStrategy = new TrustSelfSignedStrategy();
-                    SSLContext sslContext = org.apache.http.ssl.SSLContexts.custom().loadTrustMaterial(null, acceptingTrustStrategy).build();
+                    TrustSelfSignedStrategy acceptingTrustStrategy = new TrustSelfSignedStrategy();
+                    SSLContext sslContext = org.apache.hc.core5.ssl.SSLContexts.custom().loadTrustMaterial(null, acceptingTrustStrategy).build();
                     SSLConnectionSocketFactory csf = new SSLConnectionSocketFactory(sslContext, NoopHostnameVerifier.INSTANCE);
-                    httpClient = HttpClients.custom().setSSLSocketFactory(csf).build();
+                    HttpClientConnectionManager connectionManager = PoolingHttpClientConnectionManagerBuilder.create().setSSLSocketFactory(csf).build();
+                    httpClient = HttpClients.custom().setConnectionManager(connectionManager).build();
                 } else {
                     httpClient = HttpClients.createDefault();
                 }
@@ -269,8 +272,8 @@ public class IdPMetadata {
                 }
 
                 resolver.setId(entityId);
-                resolver.setMinRefreshDelay(1000L * 60 * 60 * config.getIdpMetadataMinRefreshDelay());
-                resolver.setMaxRefreshDelay(1000L * 60 * 60 * config.getIdpMetadataMaxRefreshDelay());
+                resolver.setMinRefreshDelay(Duration.ofHours(config.getIdpMetadataMinRefreshDelay()));
+                resolver.setMaxRefreshDelay(Duration.ofHours(config.getIdpMetadataMaxRefreshDelay()));
             } catch (ResolverException | KeyManagementException | NoSuchAlgorithmException | KeyStoreException e) {
                 throw new InternalException("Could not create MetadataResolver", e);
             }

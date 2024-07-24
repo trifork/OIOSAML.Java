@@ -1,12 +1,17 @@
 package dk.gov.oio.saml.session;
 
-import dk.gov.oio.saml.util.InternalException;
-import dk.gov.oio.saml.util.StringUtil;
-import org.joda.time.DateTime;
-import org.opensaml.saml.saml2.core.*;
-
+import java.time.Instant;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import org.opensaml.saml.saml2.core.BaseID;
+import org.opensaml.saml.saml2.core.Issuer;
+import org.opensaml.saml.saml2.core.LogoutRequest;
+import org.opensaml.saml.saml2.core.NameID;
+import org.opensaml.saml.saml2.core.SessionIndex;
+
+import dk.gov.oio.saml.util.InternalException;
+import dk.gov.oio.saml.util.StringUtil;
 
 public class LogoutRequestWrapper {
 
@@ -37,7 +42,7 @@ public class LogoutRequestWrapper {
     public String getSessionIndexesAsString() {
         return delegator.getSessionIndexes()
                 .stream()
-                .map(sessionIndex -> sessionIndex.getSessionIndex())
+                .map(sessionIndex -> sessionIndex.getValue())
                 .collect(Collectors
                         .joining(", ", "[", "]"));
     }
@@ -50,7 +55,7 @@ public class LogoutRequestWrapper {
         return delegator.getReason();
     }
 
-    public DateTime getNotOnOrAfter() {
+    public Instant getNotOnOrAfter() {
         return delegator.getNotOnOrAfter();
     }
 
@@ -70,7 +75,7 @@ public class LogoutRequestWrapper {
         return delegator.getID();
     }
 
-    public DateTime getIssueInstant() {
+    public Instant getIssueInstant() {
         return delegator.getIssueInstant();
     }
 

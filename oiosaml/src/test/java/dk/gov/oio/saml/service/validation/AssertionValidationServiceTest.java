@@ -1,24 +1,15 @@
 package dk.gov.oio.saml.service.validation;
 
-import dk.gov.oio.saml.model.NSISLevel;
-import dk.gov.oio.saml.service.AssertionService;
-import dk.gov.oio.saml.service.AuthnRequestService;
-import dk.gov.oio.saml.service.BaseServiceTest;
-import dk.gov.oio.saml.session.AuthnRequestWrapper;
-import dk.gov.oio.saml.util.ExternalException;
-import dk.gov.oio.saml.util.IdpUtil;
-import dk.gov.oio.saml.util.SamlHelper;
-import dk.gov.oio.saml.util.TestConstants;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
-import javax.servlet.http.HttpServletRequest;
-import org.joda.time.DateTime;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.opensaml.core.config.InitializationException;
 import org.opensaml.messaging.context.MessageContext;
-import org.opensaml.saml.common.SAMLObject;
 import org.opensaml.saml.common.assertion.AssertionValidationException;
 import org.opensaml.saml.saml2.core.Assertion;
 import org.opensaml.saml.saml2.core.Audience;
@@ -29,6 +20,17 @@ import org.opensaml.saml.saml2.core.Issuer;
 import org.opensaml.saml.saml2.core.Response;
 import org.opensaml.saml.saml2.core.impl.EncryptedAssertionMarshaller;
 import org.opensaml.saml.saml2.core.impl.EncryptedAssertionUnmarshaller;
+
+import dk.gov.oio.saml.model.NSISLevel;
+import dk.gov.oio.saml.service.AssertionService;
+import dk.gov.oio.saml.service.AuthnRequestService;
+import dk.gov.oio.saml.service.BaseServiceTest;
+import dk.gov.oio.saml.session.AuthnRequestWrapper;
+import dk.gov.oio.saml.util.ExternalException;
+import dk.gov.oio.saml.util.IdpUtil;
+import dk.gov.oio.saml.util.SamlHelper;
+import dk.gov.oio.saml.util.TestConstants;
+import jakarta.servlet.http.HttpServletRequest;
 
 public class AssertionValidationServiceTest extends BaseServiceTest {
 
@@ -48,7 +50,7 @@ public class AssertionValidationServiceTest extends BaseServiceTest {
 
         // Create MessageContext, Response and Assertion
         String nameID = "https://data.gov.dk/model/core/eid/person/uuid/37a5a1aa-67ce-4f70-b7c0-b8e678d585f7";
-        MessageContext<SAMLObject> messageContext = IdpUtil.createMessageWithAssertion(true, true, true, nameID, TestConstants.SP_ENTITY_ID, TestConstants.SP_ASSERTION_CONSUMER_URL, inResponseToId);
+        MessageContext messageContext = IdpUtil.createMessageWithAssertion(true, true, true, nameID, TestConstants.SP_ENTITY_ID, TestConstants.SP_ASSERTION_CONSUMER_URL, inResponseToId);
         Response response = (Response) messageContext.getMessage();
 
         AssertionService assertionService = new AssertionService();
@@ -74,7 +76,7 @@ public class AssertionValidationServiceTest extends BaseServiceTest {
 
         // Create MessageContext, Response and Assertion
         String nameID = "https://data.gov.dk/model/core/eid/person/uuid/37a5a1aa-67ce-4f70-b7c0-b8e678d585f7";
-        MessageContext<SAMLObject> messageContext = IdpUtil.createMessageWithAssertion(true, true, true,  nameID, TestConstants.SP_ENTITY_ID, TestConstants.SP_ASSERTION_CONSUMER_URL, inResponseToId);
+        MessageContext messageContext = IdpUtil.createMessageWithAssertion(true, true, true,  nameID, TestConstants.SP_ENTITY_ID, TestConstants.SP_ASSERTION_CONSUMER_URL, inResponseToId);
         Response response = (Response) messageContext.getMessage();
 
         AssertionService assertionService = new AssertionService();
@@ -103,14 +105,14 @@ public class AssertionValidationServiceTest extends BaseServiceTest {
 
         // Create MessageContext, Response and Assertion
         String nameID = "https://data.gov.dk/model/core/eid/person/uuid/37a5a1aa-67ce-4f70-b7c0-b8e678d585f7";
-        MessageContext<SAMLObject> messageContext = IdpUtil.createMessageWithAssertion(true, true, true,  nameID, TestConstants.SP_ENTITY_ID, TestConstants.SP_ASSERTION_CONSUMER_URL, inResponseToId);
+        MessageContext messageContext = IdpUtil.createMessageWithAssertion(true, true, true,  nameID, TestConstants.SP_ENTITY_ID, TestConstants.SP_ASSERTION_CONSUMER_URL, inResponseToId);
         Response response = (Response) messageContext.getMessage();
 
         AssertionService assertionService = new AssertionService();
         Assertion assertion = assertionService.getAssertion(response);
 
         // Make assertion seem old
-        assertion.setIssueInstant(DateTime.now().minusHours(1));
+        assertion.setIssueInstant(Instant.now().minus(Duration.ofHours(1)));
 
         // Validate, should fail
         Assertions.assertThrows(AssertionValidationException.class , () -> {
@@ -134,7 +136,7 @@ public class AssertionValidationServiceTest extends BaseServiceTest {
 
         // Create MessageContext, Response and Assertion
         String nameID = "https://data.gov.dk/model/core/eid/person/uuid/37a5a1aa-67ce-4f70-b7c0-b8e678d585f7";
-        MessageContext<SAMLObject> messageContext = IdpUtil.createMessageWithAssertion(false, true, true,  nameID, TestConstants.SP_ENTITY_ID, TestConstants.SP_ASSERTION_CONSUMER_URL, inResponseToId);
+        MessageContext messageContext = IdpUtil.createMessageWithAssertion(false, true, true,  nameID, TestConstants.SP_ENTITY_ID, TestConstants.SP_ASSERTION_CONSUMER_URL, inResponseToId);
         Response response = (Response) messageContext.getMessage();
 
         AssertionService assertionService = new AssertionService();
@@ -162,7 +164,7 @@ public class AssertionValidationServiceTest extends BaseServiceTest {
 
         // Create MessageContext, Response and EncryptedAssertion
         String nameID = "https://data.gov.dk/model/core/eid/person/uuid/37a5a1aa-67ce-4f70-b7c0-b8e678d585f7";
-        MessageContext<SAMLObject> messageContext = IdpUtil.createMessageWithAssertion(true, true, true,  nameID, TestConstants.SP_ENTITY_ID, TestConstants.SP_ASSERTION_CONSUMER_URL, inResponseToId);
+        MessageContext messageContext = IdpUtil.createMessageWithAssertion(true, true, true,  nameID, TestConstants.SP_ENTITY_ID, TestConstants.SP_ASSERTION_CONSUMER_URL, inResponseToId);
         Response response = (Response) messageContext.getMessage();
 
         AssertionService assertionService = new AssertionService();
@@ -214,7 +216,7 @@ public class AssertionValidationServiceTest extends BaseServiceTest {
 
         // Create MessageContext, Response and Assertion
         String nameID = "https://data.gov.dk/model/core/eid/person/uuid/37a5a1aa-67ce-4f70-b7c0-b8e678d585f7";
-        MessageContext<SAMLObject> messageContext = IdpUtil.createMessageWithAssertion(true, true, true,  nameID, TestConstants.SP_ENTITY_ID, TestConstants.SP_ASSERTION_CONSUMER_URL, inResponseToId);
+        MessageContext messageContext = IdpUtil.createMessageWithAssertion(true, true, true,  nameID, TestConstants.SP_ENTITY_ID, TestConstants.SP_ASSERTION_CONSUMER_URL, inResponseToId);
         Response response = (Response) messageContext.getMessage();
 
         AssertionService assertionService = new AssertionService();
@@ -248,7 +250,7 @@ public class AssertionValidationServiceTest extends BaseServiceTest {
 
         // Create MessageContext, Response and Assertion
         String nameID = "https://data.gov.dk/model/core/eid/person/uuid/37a5a1aa-67ce-4f70-b7c0-b8e678d585f7";
-        MessageContext<SAMLObject> messageContext = IdpUtil.createMessageWithAssertion(true, true, false,  nameID, TestConstants.SP_ENTITY_ID, TestConstants.SP_ASSERTION_CONSUMER_URL, inResponseToId);
+        MessageContext messageContext = IdpUtil.createMessageWithAssertion(true, true, false,  nameID, TestConstants.SP_ENTITY_ID, TestConstants.SP_ASSERTION_CONSUMER_URL, inResponseToId);
         Response response = (Response) messageContext.getMessage();
 
         AssertionService assertionService = new AssertionService();
@@ -276,7 +278,7 @@ public class AssertionValidationServiceTest extends BaseServiceTest {
 
         // Create MessageContext, Response and Assertion
         String nameID = "https://data.gov.dk/model/core/eid/person/uuid/37a5a1aa-67ce-4f70-b7c0-b8e678d585f7";
-        MessageContext<SAMLObject> messageContext = IdpUtil.createMessageWithAssertion(true, true, true,  nameID, TestConstants.SP_ENTITY_ID, TestConstants.SP_ASSERTION_CONSUMER_URL, inResponseToId);
+        MessageContext messageContext = IdpUtil.createMessageWithAssertion(true, true, true,  nameID, TestConstants.SP_ENTITY_ID, TestConstants.SP_ASSERTION_CONSUMER_URL, inResponseToId);
         Response response = (Response) messageContext.getMessage();
 
         AssertionService assertionService = new AssertionService();
@@ -285,7 +287,7 @@ public class AssertionValidationServiceTest extends BaseServiceTest {
         // Substitute good AudienceRestriction for bad one for test
         AudienceRestriction audienceRestriction = SamlHelper.build(AudienceRestriction.class);
         Audience audience = SamlHelper.build(Audience.class);
-        audience.setAudienceURI("NotTheCorrectRecipient");
+        audience.setURI("NotTheCorrectRecipient");
         audienceRestriction.getAudiences().add(audience);
         List<AudienceRestriction> restrictions = assertion.getConditions().getAudienceRestrictions();
         restrictions.clear();
@@ -314,7 +316,7 @@ public class AssertionValidationServiceTest extends BaseServiceTest {
 
         // Create MessageContext, Response and Assertion
         String incorrectNameID = "https://data.gov.dk/model/core/eid/person/uuid/NotAUuidXyzAbcD";
-        MessageContext<SAMLObject> messageContext = IdpUtil.createMessageWithAssertion(true, true, true,  incorrectNameID, TestConstants.SP_ENTITY_ID, TestConstants.SP_ASSERTION_CONSUMER_URL, inResponseToId);
+        MessageContext messageContext = IdpUtil.createMessageWithAssertion(true, true, true,  incorrectNameID, TestConstants.SP_ENTITY_ID, TestConstants.SP_ASSERTION_CONSUMER_URL, inResponseToId);
         Response response = (Response) messageContext.getMessage();
 
         AssertionService assertionService = new AssertionService();

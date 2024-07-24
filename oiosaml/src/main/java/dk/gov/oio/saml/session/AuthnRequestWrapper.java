@@ -1,13 +1,13 @@
 package dk.gov.oio.saml.session;
 
 import java.io.Serializable;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
 import dk.gov.oio.saml.extensions.appswitch.AppSwitch;
 import dk.gov.oio.saml.model.NSISLevel;
 import dk.gov.oio.saml.util.StringUtil;
-import org.joda.time.DateTime;
 import org.opensaml.core.xml.XMLObject;
 import org.opensaml.saml.saml2.core.AuthnContextClassRef;
 import org.opensaml.saml.saml2.core.AuthnRequest;
@@ -40,7 +40,7 @@ public class AuthnRequestWrapper implements Serializable {
             List<AuthnContextClassRef> authnContextClassRefs = authnRequest.getRequestedAuthnContext().getAuthnContextClassRefs();
 
             for (AuthnContextClassRef authnContextClassRef : authnContextClassRefs) {
-                String value = authnContextClassRef.getAuthnContextClassRef();
+                String value = authnContextClassRef.getURI();
                 if (StringUtil.isNotEmpty(value)) {
                     getAuthnContextClassRefValues().add(value);
                 }
@@ -57,7 +57,7 @@ public class AuthnRequestWrapper implements Serializable {
         Issuer issuer = authnRequest.getIssuer();
         this.issuer = (issuer != null) ? issuer.getValue() : "";
 
-        DateTime issueInstant = authnRequest.getIssueInstant();
+        Instant issueInstant = authnRequest.getIssueInstant();
         this.issueInstant = (issueInstant != null) ? issueInstant.toString() : "";
 
         // get id

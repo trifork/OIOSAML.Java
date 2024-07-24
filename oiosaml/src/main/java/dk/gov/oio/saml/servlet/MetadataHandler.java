@@ -3,8 +3,8 @@ package dk.gov.oio.saml.servlet;
 import dk.gov.oio.saml.service.SPMetadataService;
 import dk.gov.oio.saml.util.InternalException;
 import java.io.IOException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.opensaml.core.config.InitializationException;
 
 public class MetadataHandler extends SAMLHandler {

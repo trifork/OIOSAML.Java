@@ -1,15 +1,16 @@
 package dk.gov.oio.saml.extensions.appswitch;
 
-import org.opensaml.core.xml.XMLObject;
-import org.opensaml.saml.common.AbstractSAMLObject;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class AppSwitchImpl extends AbstractSAMLObject implements AppSwitch {
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
+import org.opensaml.core.xml.AbstractXMLObject;
+import org.opensaml.core.xml.XMLObject;
+
+public class AppSwitchImpl extends AbstractXMLObject implements AppSwitch {
     private Platform platform;
     private ReturnURL returnURL;
 

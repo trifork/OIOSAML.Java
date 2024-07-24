@@ -2,41 +2,42 @@ package dk.gov.oio.saml.servlet;
 
 import java.io.IOException;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import dk.gov.oio.saml.util.*;
 import org.opensaml.core.xml.io.MarshallingException;
 import org.opensaml.messaging.context.MessageContext;
-import org.opensaml.saml.common.SAMLObject;
 import org.opensaml.saml.saml2.core.LogoutResponse;
 import org.opensaml.saml.saml2.core.StatusCode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.w3c.dom.Element;
 
 import dk.gov.oio.saml.config.Configuration;
 import dk.gov.oio.saml.service.OIOSAML3Service;
 import dk.gov.oio.saml.servlet.ErrorHandler.ERROR_TYPE;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.w3c.dom.Element;
+import dk.gov.oio.saml.util.ExternalException;
+import dk.gov.oio.saml.util.InternalException;
+import dk.gov.oio.saml.util.SamlHelper;
+import dk.gov.oio.saml.util.StringUtil;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 public class LogoutResponseHandler extends SAMLHandler {
     private static final Logger log = LoggerFactory.getLogger(LogoutResponseHandler.class);
 
     @Override
     public void handleGet(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) throws IOException, ExternalException, InternalException {
-        MessageContext<SAMLObject> context = decodeGet(httpServletRequest);
+        MessageContext context = decodeGet(httpServletRequest);
 
         handle(httpServletRequest, httpServletResponse, context);
     }
 
     @Override
     public void handlePost(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) throws ExternalException, InternalException, IOException {
-        MessageContext<SAMLObject> context = decodePost(httpServletRequest);
+        MessageContext context = decodePost(httpServletRequest);
 
         handle(httpServletRequest, httpServletResponse, context);
     }
     
-    private void handle(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, MessageContext<SAMLObject> context) throws IOException, ExternalException, InternalException {
+    private void handle(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, MessageContext context) throws IOException, ExternalException, InternalException {
         LogoutResponse logoutResponse = getSamlObject(context, LogoutResponse.class);
 
         String statusCode = null;
@@ -47,7 +48,7 @@ public class LogoutResponseHandler extends SAMLHandler {
             }
 
             if (logoutResponse.getStatus().getStatusMessage() != null) {
-                statusMessage = logoutResponse.getStatus().getStatusMessage().getMessage();
+                statusMessage = logoutResponse.getStatus().getStatusMessage().getValue();
             }
         }
 

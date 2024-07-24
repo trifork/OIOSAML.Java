@@ -4,6 +4,8 @@ import java.io.FileInputStream;
 import java.security.KeyStore;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,9 +13,7 @@ import java.util.Map;
 import javax.xml.crypto.dsig.CanonicalizationMethod;
 import javax.xml.namespace.QName;
 
-import dk.gov.oio.saml.model.NSISLevel;
 import org.apache.xml.security.utils.EncryptionConstants;
-import org.joda.time.DateTime;
 import org.opensaml.core.config.InitializationException;
 import org.opensaml.core.criterion.EntityIdCriterion;
 import org.opensaml.core.xml.XMLObjectBuilderFactory;
@@ -21,12 +21,33 @@ import org.opensaml.core.xml.config.XMLObjectProviderRegistrySupport;
 import org.opensaml.core.xml.schema.XSAny;
 import org.opensaml.core.xml.schema.impl.XSAnyBuilder;
 import org.opensaml.messaging.context.MessageContext;
-import org.opensaml.saml.common.SAMLObject;
 import org.opensaml.saml.common.binding.SAMLBindingSupport;
 import org.opensaml.saml.common.messaging.context.SAMLEndpointContext;
 import org.opensaml.saml.common.messaging.context.SAMLPeerEntityContext;
 import org.opensaml.saml.common.xml.SAMLConstants;
-import org.opensaml.saml.saml2.core.*;
+import org.opensaml.saml.saml2.core.Assertion;
+import org.opensaml.saml.saml2.core.Attribute;
+import org.opensaml.saml.saml2.core.AttributeStatement;
+import org.opensaml.saml.saml2.core.AttributeValue;
+import org.opensaml.saml.saml2.core.Audience;
+import org.opensaml.saml.saml2.core.AudienceRestriction;
+import org.opensaml.saml.saml2.core.AuthnContext;
+import org.opensaml.saml.saml2.core.AuthnContextClassRef;
+import org.opensaml.saml.saml2.core.AuthnStatement;
+import org.opensaml.saml.saml2.core.Conditions;
+import org.opensaml.saml.saml2.core.EncryptedAssertion;
+import org.opensaml.saml.saml2.core.Issuer;
+import org.opensaml.saml.saml2.core.LogoutRequest;
+import org.opensaml.saml.saml2.core.LogoutResponse;
+import org.opensaml.saml.saml2.core.NameID;
+import org.opensaml.saml.saml2.core.NameIDType;
+import org.opensaml.saml.saml2.core.Response;
+import org.opensaml.saml.saml2.core.SessionIndex;
+import org.opensaml.saml.saml2.core.Status;
+import org.opensaml.saml.saml2.core.StatusCode;
+import org.opensaml.saml.saml2.core.Subject;
+import org.opensaml.saml.saml2.core.SubjectConfirmation;
+import org.opensaml.saml.saml2.core.SubjectConfirmationData;
 import org.opensaml.saml.saml2.core.impl.AssertionMarshaller;
 import org.opensaml.saml.saml2.encryption.Encrypter;
 import org.opensaml.saml.saml2.metadata.SingleSignOnService;
@@ -44,13 +65,14 @@ import org.opensaml.xmlsec.signature.KeyInfo;
 import org.opensaml.xmlsec.signature.Signature;
 import org.opensaml.xmlsec.signature.support.Signer;
 
+import dk.gov.oio.saml.model.NSISLevel;
 import dk.gov.oio.saml.service.OIOSAML3Service;
-import net.shibboleth.utilities.java.support.resolver.CriteriaSet;
-import net.shibboleth.utilities.java.support.security.RandomIdentifierGenerationStrategy;
+import net.shibboleth.shared.resolver.CriteriaSet;
+import net.shibboleth.shared.security.impl.RandomIdentifierGenerationStrategy;
 
 public class IdpUtil {
 
-    public static MessageContext<SAMLObject> createMessageWithAssertion(
+    public static MessageContext createMessageWithAssertion(
             boolean encrypted,
             boolean validCert,
             boolean validSignature,
@@ -62,7 +84,7 @@ public class IdpUtil {
         Response response = createResponse(encrypted, validCert, validSignature, subjectNameID, recipientEntityId, assertionConsumerUrl, inResponseToId);
 
         // Build Proxy MessageContext and add response
-        MessageContext<SAMLObject> messageContext = new MessageContext<>();
+        MessageContext messageContext = new MessageContext();
         messageContext.setMessage(response);
 
         // Set RelayState
@@ -90,7 +112,7 @@ public class IdpUtil {
             String assertionConsumerUrl,
             String inResponseToId) throws Exception {
 
-        DateTime issueInstant = new DateTime();
+        Instant issueInstant = Instant.now();
 
         Response response = buildSAMLObject(Response.class);
         response.setDestination(assertionConsumerUrl);
@@ -123,9 +145,9 @@ public class IdpUtil {
         return response;
     }
 
-    public static MessageContext<SAMLObject> createMessageWithLogoutResponse(LogoutRequest logoutRequest, String destination, String statusCode) throws Exception {
+    public static MessageContext createMessageWithLogoutResponse(LogoutRequest logoutRequest, String destination, String statusCode) throws Exception {
         // Create message context
-        MessageContext<SAMLObject> messageContext = new MessageContext<>();
+        MessageContext messageContext = new MessageContext();
 
         // Create AuthnRequest
         LogoutResponse logoutResponse = createLogoutResponse(destination, logoutRequest, statusCode);
@@ -158,7 +180,7 @@ public class IdpUtil {
 
         logoutResponse.setID(id);
         logoutResponse.setDestination(destination);
-        logoutResponse.setIssueInstant(new DateTime());
+        logoutResponse.setIssueInstant(Instant.now());
         logoutResponse.setInResponseTo(logoutRequest.getID());
 
         // Create Issuer
@@ -176,9 +198,9 @@ public class IdpUtil {
         return logoutResponse;
     }
 
-    public static MessageContext<SAMLObject> createMessageWithLogoutRequest(String nameID, String nameIDFormat, String destination) throws Exception {
+    public static MessageContext createMessageWithLogoutRequest(String nameID, String nameIDFormat, String destination) throws Exception {
         // Create message context
-        MessageContext<SAMLObject> messageContext = new MessageContext<>();
+        MessageContext messageContext = new MessageContext();
 
         // Create AuthnRequest
         LogoutRequest outgoingLogoutRequest = createLogoutRequest(nameID, nameIDFormat, destination);
@@ -212,7 +234,7 @@ public class IdpUtil {
         outgoingLR.setID(id);
 
         outgoingLR.setDestination(destination);
-        outgoingLR.setIssueInstant(new DateTime());
+        outgoingLR.setIssueInstant(Instant.now());
 
         // Create Issuer
         Issuer issuer = SamlHelper.build(Issuer.class);
@@ -229,7 +251,7 @@ public class IdpUtil {
 
         // SessionIndex
         SessionIndex sessionIndex = SamlHelper.build(SessionIndex.class);
-        sessionIndex.setSessionIndex(secureRandomIdGenerator.generateIdentifier());
+        sessionIndex.setValue(secureRandomIdGenerator.generateIdentifier());
         outgoingLR.getSessionIndexes().add(sessionIndex);
 
         return outgoingLR;
@@ -282,7 +304,7 @@ public class IdpUtil {
         Signer.signObject(signature);
     }
 
-    private static Assertion createAssertion(DateTime issueInstant, String subjectNameID, String recipientEntityId, String assertionConsumerUrl) {
+    private static Assertion createAssertion(Instant issueInstant, String subjectNameID, String recipientEntityId, String assertionConsumerUrl) {
         RandomIdentifierGenerationStrategy secureRandomIdGenerator = new RandomIdentifierGenerationStrategy();
         String id = secureRandomIdGenerator.generateIdentifier();
 
@@ -292,13 +314,13 @@ public class IdpUtil {
 
         //AuthnStatement
         AuthnContextClassRef authnContextClassRef = buildSAMLObject(AuthnContextClassRef.class);
-        authnContextClassRef.setAuthnContextClassRef("urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport");
+        authnContextClassRef.setURI("urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport");
 
         AuthnContext authnContext = buildSAMLObject(AuthnContext.class);
         authnContext.setAuthnContextClassRef(authnContextClassRef);
 
         AuthnStatement authnStatement = buildSAMLObject(AuthnStatement.class);
-        authnStatement.setAuthnInstant(new DateTime());
+        authnStatement.setAuthnInstant(Instant.now());
         authnStatement.setSessionIndex(id);
         assertion.setID(id);
 
@@ -330,7 +352,7 @@ public class IdpUtil {
 
         SubjectConfirmationData subjectConfirmationData = buildSAMLObject(SubjectConfirmationData.class);
         subjectConfirmationData.setRecipient(assertionConsumerUrl);
-        subjectConfirmationData.setNotOnOrAfter(new DateTime(issueInstant).plusMinutes(5));
+        subjectConfirmationData.setNotOnOrAfter(issueInstant.plus(Duration.ofMinutes(5)));
 
         subjectConfirmation.setSubjectConfirmationData(subjectConfirmationData);
 
@@ -340,12 +362,12 @@ public class IdpUtil {
 
         AudienceRestriction audienceRestriction = buildSAMLObject(AudienceRestriction.class);
         Audience audience = buildSAMLObject(Audience.class);
-        audience.setAudienceURI(recipientEntityId);
+        audience.setURI(recipientEntityId);
         audienceRestriction.getAudiences().add(audience);
 
         Conditions conditions = buildSAMLObject(Conditions.class);
         conditions.setNotBefore(issueInstant);
-        conditions.setNotOnOrAfter(new DateTime(issueInstant).plusHours(1));
+        conditions.setNotOnOrAfter(issueInstant.plus(Duration.ofHours(1)));
         conditions.getAudienceRestrictions().add(audienceRestriction);
         assertion.setConditions(conditions);
 

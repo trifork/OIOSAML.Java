@@ -1,11 +1,11 @@
 package dk.gov.oio.saml.session;
 
 import java.io.Serializable;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.joda.time.DateTime;
 import org.opensaml.core.xml.io.MarshallingException;
 import org.opensaml.saml.saml2.core.Assertion;
 import org.opensaml.saml.saml2.core.AttributeStatement;
@@ -46,9 +46,9 @@ public class AssertionWrapper implements Serializable {
     private PrivilegeList privilegeList;
     private Map<String, String> attributeValues;
     private boolean sessionExpired;
-    private DateTime confirmationTime;
-    private DateTime conditionTimeNotBefore;
-    private DateTime conditionTimeNotOnOrAfter;
+    private Instant confirmationTime;
+    private Instant conditionTimeNotBefore;
+    private Instant conditionTimeNotOnOrAfter;
 
     public AssertionWrapper(Assertion assertion) throws InternalException {
         this.assertionBase64 = StringUtil.xmlObjectToBase64(assertion);
@@ -87,7 +87,7 @@ public class AssertionWrapper implements Serializable {
             List<String> audiences = new ArrayList<>();
             for (AudienceRestriction audienceRestriction : conditions.getAudienceRestrictions()) {
                 for (Audience audience : audienceRestriction.getAudiences()) {
-                    audiences.add(audience.getAudienceURI());
+                    audiences.add(audience.getURI());
                 }
             }
 
@@ -126,7 +126,7 @@ public class AssertionWrapper implements Serializable {
                 // isSessionExpired()
                 boolean sessionExpired = false;
                 if (authnStatement.getSessionNotOnOrAfter() != null) {
-                    sessionExpired = authnStatement.getSessionNotOnOrAfter().isBeforeNow();
+                    sessionExpired = authnStatement.getSessionNotOnOrAfter().isBefore(Instant.now());
                 }
                 this.sessionExpired = sessionExpired;
 
@@ -135,7 +135,7 @@ public class AssertionWrapper implements Serializable {
                 if (authnContext != null) {
                     AuthnContextClassRef authnContextClassRef = authnContext.getAuthnContextClassRef();
                     if (authnContextClassRef != null) {
-                        this.authnContextClassRef = authnContextClassRef.getAuthnContextClassRef();
+                        this.authnContextClassRef = authnContextClassRef.getURI();
                     }
                 }
             }
@@ -255,15 +255,15 @@ public class AssertionWrapper implements Serializable {
         return sessionExpired;
     }
 
-    public DateTime getConfirmationTime() {
+    public Instant getConfirmationTime() {
         return confirmationTime;
     }
 
-    public DateTime getConditionTimeNotBefore() {
+    public Instant getConditionTimeNotBefore() {
         return conditionTimeNotBefore;
     }
 
-    public DateTime getConditionTimeNotOnOrAfter() {
+    public Instant getConditionTimeNotOnOrAfter() {
         return conditionTimeNotOnOrAfter;
     }
 

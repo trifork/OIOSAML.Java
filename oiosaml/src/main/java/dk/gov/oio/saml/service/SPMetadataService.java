@@ -71,7 +71,7 @@ public class SPMetadataService {
 
         // NameID Format
         NameIDFormat nameIDFormat = SamlHelper.build(NameIDFormat.class);
-        nameIDFormat.setFormat(config.getNameIDFormat());
+        nameIDFormat.setURI(config.getNameIDFormat());
         spssoDescriptor.getNameIDFormats().add(nameIDFormat);
 
         // set requested attributes
@@ -83,27 +83,27 @@ public class SPMetadataService {
         AttributeConsumingService attributeConsumingService = SamlHelper.build(AttributeConsumingService.class);
         attributeConsumingService.setIsDefault(true);
         attributeConsumingService.getNames().add(serviceName);
-        attributeConsumingService.getRequestAttributes().add(buildRequiredAttribute("https://data.gov.dk/model/core/specVersion", true));
-        attributeConsumingService.getRequestAttributes().add(buildRequiredAttribute("https://data.gov.dk/model/core/eid/bootstrapToken", false));
-        attributeConsumingService.getRequestAttributes().add(buildRequiredAttribute("https://data.gov.dk/model/core/eid/privilegesIntermediate", false));
-        attributeConsumingService.getRequestAttributes().add(buildRequiredAttribute("https://data.gov.dk/concept/core/nsis/loa", true));
-        attributeConsumingService.getRequestAttributes().add(buildRequiredAttribute("https://data.gov.dk/concept/core/nsis/ial", false));
-        attributeConsumingService.getRequestAttributes().add(buildRequiredAttribute("https://data.gov.dk/concept/core/nsis/aal", false));
-        attributeConsumingService.getRequestAttributes().add(buildRequiredAttribute("https://data.gov.dk/model/core/eid/fullName", false));
-        attributeConsumingService.getRequestAttributes().add(buildRequiredAttribute("https://data.gov.dk/model/core/eid/firstName", false));
-        attributeConsumingService.getRequestAttributes().add(buildRequiredAttribute("https://data.gov.dk/model/core/eid/lastName", false));
-        attributeConsumingService.getRequestAttributes().add(buildRequiredAttribute("https://data.gov.dk/model/core/eid/email", false));
-        attributeConsumingService.getRequestAttributes().add(buildRequiredAttribute("https://data.gov.dk/model/core/eid/cprNumber", false));
-        attributeConsumingService.getRequestAttributes().add(buildRequiredAttribute("https://data.gov.dk/model/core/eid/age", false));
-        attributeConsumingService.getRequestAttributes().add(buildRequiredAttribute("https://data.gov.dk/model/core/eid/cprUuid", false));
-        attributeConsumingService.getRequestAttributes().add(buildRequiredAttribute("https://data.gov.dk/model/core/eid/dateOfBirth", false));
-        attributeConsumingService.getRequestAttributes().add(buildRequiredAttribute("https://data.gov.dk/model/core/eid/person/pid", false));
-        attributeConsumingService.getRequestAttributes().add(buildRequiredAttribute("https://data.gov.dk/model/core/eid/professional/uuid/persistent", false));
-        attributeConsumingService.getRequestAttributes().add(buildRequiredAttribute("https://data.gov.dk/model/core/eid/professional/rid", false));
-        attributeConsumingService.getRequestAttributes().add(buildRequiredAttribute("https://data.gov.dk/model/core/eid/professional/cvr", true));
-        attributeConsumingService.getRequestAttributes().add(buildRequiredAttribute("https://data.gov.dk/model/core/eid/professional/orgName", true));
-        attributeConsumingService.getRequestAttributes().add(buildRequiredAttribute("https://data.gov.dk/model/core/eid/professional/productionUnit", false));
-        attributeConsumingService.getRequestAttributes().add(buildRequiredAttribute("https://data.gov.dk/model/core/eid/professional/seNumber", false));
+        attributeConsumingService.getRequestedAttributes().add(buildRequiredAttribute("https://data.gov.dk/model/core/specVersion", true));
+        attributeConsumingService.getRequestedAttributes().add(buildRequiredAttribute("https://data.gov.dk/model/core/eid/bootstrapToken", false));
+        attributeConsumingService.getRequestedAttributes().add(buildRequiredAttribute("https://data.gov.dk/model/core/eid/privilegesIntermediate", false));
+        attributeConsumingService.getRequestedAttributes().add(buildRequiredAttribute("https://data.gov.dk/concept/core/nsis/loa", true));
+        attributeConsumingService.getRequestedAttributes().add(buildRequiredAttribute("https://data.gov.dk/concept/core/nsis/ial", false));
+        attributeConsumingService.getRequestedAttributes().add(buildRequiredAttribute("https://data.gov.dk/concept/core/nsis/aal", false));
+        attributeConsumingService.getRequestedAttributes().add(buildRequiredAttribute("https://data.gov.dk/model/core/eid/fullName", false));
+        attributeConsumingService.getRequestedAttributes().add(buildRequiredAttribute("https://data.gov.dk/model/core/eid/firstName", false));
+        attributeConsumingService.getRequestedAttributes().add(buildRequiredAttribute("https://data.gov.dk/model/core/eid/lastName", false));
+        attributeConsumingService.getRequestedAttributes().add(buildRequiredAttribute("https://data.gov.dk/model/core/eid/email", false));
+        attributeConsumingService.getRequestedAttributes().add(buildRequiredAttribute("https://data.gov.dk/model/core/eid/cprNumber", false));
+        attributeConsumingService.getRequestedAttributes().add(buildRequiredAttribute("https://data.gov.dk/model/core/eid/age", false));
+        attributeConsumingService.getRequestedAttributes().add(buildRequiredAttribute("https://data.gov.dk/model/core/eid/cprUuid", false));
+        attributeConsumingService.getRequestedAttributes().add(buildRequiredAttribute("https://data.gov.dk/model/core/eid/dateOfBirth", false));
+        attributeConsumingService.getRequestedAttributes().add(buildRequiredAttribute("https://data.gov.dk/model/core/eid/person/pid", false));
+        attributeConsumingService.getRequestedAttributes().add(buildRequiredAttribute("https://data.gov.dk/model/core/eid/professional/uuid/persistent", false));
+        attributeConsumingService.getRequestedAttributes().add(buildRequiredAttribute("https://data.gov.dk/model/core/eid/professional/rid", false));
+        attributeConsumingService.getRequestedAttributes().add(buildRequiredAttribute("https://data.gov.dk/model/core/eid/professional/cvr", true));
+        attributeConsumingService.getRequestedAttributes().add(buildRequiredAttribute("https://data.gov.dk/model/core/eid/professional/orgName", true));
+        attributeConsumingService.getRequestedAttributes().add(buildRequiredAttribute("https://data.gov.dk/model/core/eid/professional/productionUnit", false));
+        attributeConsumingService.getRequestedAttributes().add(buildRequiredAttribute("https://data.gov.dk/model/core/eid/professional/seNumber", false));
           
         spssoDescriptor.getAttributeConsumingServices().add(attributeConsumingService);
         
@@ -146,7 +146,7 @@ public class SPMetadataService {
         String contactEmail = config.getContactEmail();
         if (contactEmail != null && !"".equals(contactEmail)) {
             EmailAddress emailAddress = SamlHelper.build(EmailAddress.class);
-            emailAddress.setAddress(contactEmail);
+            emailAddress.setURI(contactEmail);
 
             ContactPerson contactPerson = SamlHelper.build(ContactPerson.class);
             contactPerson.setType(ContactPersonTypeEnumeration.TECHNICAL);

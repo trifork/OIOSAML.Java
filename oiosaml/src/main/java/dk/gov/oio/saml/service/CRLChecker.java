@@ -17,6 +17,7 @@ import java.security.cert.TrustAnchor;
 import java.security.cert.X509CRL;
 import java.security.cert.X509CRLEntry;
 import java.security.cert.X509Certificate;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -26,8 +27,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.bouncycastle.asn1.ASN1InputStream;
 import org.bouncycastle.asn1.ASN1OctetString;
 import org.bouncycastle.asn1.ASN1Primitive;
@@ -41,8 +40,9 @@ import org.bouncycastle.asn1.x509.GeneralName;
 import org.bouncycastle.asn1.x509.GeneralNames;
 import org.bouncycastle.i18n.filter.UntrustedUrlInput;
 import org.bouncycastle.x509.extension.X509ExtensionUtil;
-import org.joda.time.DateTime;
 import org.opensaml.core.config.InitializationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import dk.gov.oio.saml.config.Configuration;
 import dk.gov.oio.saml.util.ExternalException;
@@ -53,7 +53,7 @@ public class CRLChecker {
     private static final String AUTH_INFO_ACCESS = Extension.authorityInfoAccess.getId();
     private static Map<String, X509Certificate> certificateMap = new HashMap<String, X509Certificate>();
     
-    public static Set<X509Certificate> checkCertificates(List<X509Certificate> x509Certificates, DateTime lastCRLCheck) throws ExternalException, InternalException, InitializationException {
+    public static Set<X509Certificate> checkCertificates(List<X509Certificate> x509Certificates, Instant lastCRLCheck) throws ExternalException, InternalException, InitializationException {
         Set<X509Certificate> result = new HashSet<>();
         if (x509Certificates == null || x509Certificates.size() == 0) {
             return result;

@@ -10,6 +10,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import dk.gov.oio.saml.util.StringUtil;
+import net.shibboleth.shared.resolver.CriteriaSet;
+import net.shibboleth.shared.resolver.ResolverException;
 import dk.gov.oio.saml.util.ResourceUtil;
 import org.opensaml.core.config.InitializationException;
 import org.opensaml.core.criterion.EntityIdCriterion;
@@ -20,8 +22,6 @@ import org.opensaml.xmlsec.keyinfo.KeyInfoGenerator;
 import org.opensaml.xmlsec.keyinfo.impl.X509KeyInfoGeneratorFactory;
 import org.opensaml.xmlsec.signature.KeyInfo;
 
-import net.shibboleth.utilities.java.support.resolver.CriteriaSet;
-import net.shibboleth.utilities.java.support.resolver.ResolverException;
 import dk.gov.oio.saml.config.Configuration;
 import dk.gov.oio.saml.util.InternalException;
 import org.slf4j.Logger;

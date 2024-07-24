@@ -1,13 +1,13 @@
 package dk.gov.oio.saml.extensions.appswitch;
 
+import org.opensaml.core.xml.AbstractXMLObject;
 import org.opensaml.core.xml.XMLObject;
-import org.opensaml.saml.common.AbstractSAMLObject;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.List;
 
-public class PlatformImpl extends AbstractSAMLObject implements Platform {
+public class PlatformImpl extends AbstractXMLObject implements Platform {
     private AppSwitchPlatform platform;
 
     protected PlatformImpl(@Nullable String namespaceURI, @Nonnull String elementLocalName, @Nullable String namespacePrefix) {

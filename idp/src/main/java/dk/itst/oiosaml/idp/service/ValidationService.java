@@ -5,7 +5,7 @@ import java.security.PublicKey;
 import java.security.cert.CertificateException;
 import java.util.Base64;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import org.opensaml.messaging.context.MessageContext;
 import org.opensaml.messaging.handler.MessageHandlerException;

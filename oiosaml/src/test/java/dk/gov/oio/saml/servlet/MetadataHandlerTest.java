@@ -5,10 +5,11 @@ import dk.gov.oio.saml.util.TestConstants;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringReader;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import net.shibboleth.shared.xml.XMLParserException;
+
 import javax.xml.parsers.ParserConfigurationException;
-import net.shibboleth.utilities.java.support.xml.XMLParserException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

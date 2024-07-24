@@ -1,9 +1,9 @@
 package dk.gov.oio.saml.service;
 
-import org.joda.time.DateTime;
+import java.time.Instant;
+
 import org.opensaml.core.config.InitializationException;
 import org.opensaml.messaging.context.MessageContext;
-import org.opensaml.saml.common.SAMLObject;
 import org.opensaml.saml.common.messaging.context.SAMLEndpointContext;
 import org.opensaml.saml.common.messaging.context.SAMLPeerEntityContext;
 import org.opensaml.saml.common.xml.SAMLConstants;
@@ -17,16 +17,16 @@ import org.opensaml.xmlsec.context.SecurityParametersContext;
 
 import dk.gov.oio.saml.util.InternalException;
 import dk.gov.oio.saml.util.SamlHelper;
-import net.shibboleth.utilities.java.support.security.RandomIdentifierGenerationStrategy;
+import net.shibboleth.shared.security.impl.RandomIdentifierGenerationStrategy;
 
 public class LogoutRequestService {
     public void validateLogoutRequest() {
         return;
     }
 
-    public static MessageContext<SAMLObject> createMessageWithLogoutRequest(String nameID, String nameIDFormat, String destination, String index) throws InitializationException, InternalException {
+    public static MessageContext createMessageWithLogoutRequest(String nameID, String nameIDFormat, String destination, String index) throws InitializationException, InternalException {
         // Create message context
-        MessageContext<SAMLObject> messageContext = new MessageContext<>();
+        MessageContext messageContext = new MessageContext();
 
         // Create AuthnRequest
         LogoutRequest outgoingLogoutRequest = createLogoutRequest(nameID, nameIDFormat, destination, index);
@@ -60,7 +60,7 @@ public class LogoutRequestService {
         outgoingLR.setID(id);
 
         outgoingLR.setDestination(destination);
-        outgoingLR.setIssueInstant(new DateTime());
+        outgoingLR.setIssueInstant(Instant.now());
 
         // Create Issuer
         Issuer issuer = SamlHelper.build(Issuer.class);
@@ -78,7 +78,7 @@ public class LogoutRequestService {
         // SessionIndex
         if (index != null) {
             SessionIndex sessionIndex = SamlHelper.build(SessionIndex.class);
-            sessionIndex.setSessionIndex(index);
+            sessionIndex.setValue(index);
             outgoingLR.getSessionIndexes().add(sessionIndex);
         }
 

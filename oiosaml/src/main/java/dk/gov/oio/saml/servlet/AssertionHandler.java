@@ -1,15 +1,8 @@
 package dk.gov.oio.saml.servlet;
 
 import java.io.IOException;
+import java.time.Instant;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-
-import dk.gov.oio.saml.audit.AuditService;
-import dk.gov.oio.saml.session.SessionHandler;
-import dk.gov.oio.saml.util.*;
-import org.joda.time.DateTime;
 import org.opensaml.core.xml.io.MarshallingException;
 import org.opensaml.core.xml.schema.XSAny;
 import org.opensaml.core.xml.schema.impl.XSAnyBuilder;
@@ -17,16 +10,34 @@ import org.opensaml.messaging.context.MessageContext;
 import org.opensaml.saml.common.SAMLObject;
 import org.opensaml.saml.common.assertion.AssertionValidationException;
 import org.opensaml.saml.common.xml.SAMLConstants;
-import org.opensaml.saml.saml2.core.*;
+import org.opensaml.saml.saml2.core.Assertion;
+import org.opensaml.saml.saml2.core.Attribute;
+import org.opensaml.saml.saml2.core.AttributeStatement;
+import org.opensaml.saml.saml2.core.AttributeValue;
+import org.opensaml.saml.saml2.core.Response;
+import org.opensaml.saml.saml2.core.Status;
+import org.opensaml.saml.saml2.core.StatusCode;
+import org.opensaml.saml.saml2.core.StatusMessage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.w3c.dom.Element;
 
+import dk.gov.oio.saml.audit.AuditService;
 import dk.gov.oio.saml.service.AssertionService;
 import dk.gov.oio.saml.service.OIOSAML3Service;
 import dk.gov.oio.saml.service.validation.AssertionValidationService;
 import dk.gov.oio.saml.session.AssertionWrapper;
 import dk.gov.oio.saml.session.AuthnRequestWrapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.w3c.dom.Element;
+import dk.gov.oio.saml.session.SessionHandler;
+import dk.gov.oio.saml.util.AuditRequestUtil;
+import dk.gov.oio.saml.util.Constants;
+import dk.gov.oio.saml.util.ExternalException;
+import dk.gov.oio.saml.util.InternalException;
+import dk.gov.oio.saml.util.SamlHelper;
+import dk.gov.oio.saml.util.StringUtil;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 
 public class AssertionHandler extends SAMLHandler {
     private static final Logger log = LoggerFactory.getLogger(AssertionHandler.class);
@@ -41,8 +52,8 @@ public class AssertionHandler extends SAMLHandler {
         HttpSession session = httpServletRequest.getSession();
 
         // Decode request
-        MessageContext<SAMLObject> messageContext = decodePost(httpServletRequest);
-        SAMLObject samlObject = messageContext.getMessage();
+        MessageContext messageContext = decodePost(httpServletRequest);
+        SAMLObject samlObject = (SAMLObject) messageContext.getMessage();
 
         // Get response object
         if (!(samlObject instanceof Response)) {
@@ -74,12 +85,12 @@ public class AssertionHandler extends SAMLHandler {
 
             StatusMessage message = status.getStatusMessage();
             if (message != null) {
-                responseStatus += " " + message.getMessage();
+                responseStatus += " " + message.getValue();
             }
         }
 
         // Get instant
-        DateTime issueInstant = response.getIssueInstant();
+        Instant issueInstant = response.getIssueInstant();
         String instant = "";
         if (issueInstant != null) {
             instant = issueInstant.toString();
@@ -110,7 +121,7 @@ public class AssertionHandler extends SAMLHandler {
 			log.debug("Received passive response, setting passive assertion");
             assertion = SamlHelper.build(Assertion.class);
             assertion.setID("" + System.currentTimeMillis());
-            assertion.setIssueInstant(DateTime.now());
+            assertion.setIssueInstant(Instant.now());
             AttributeStatement attributeStatement = SamlHelper.build(AttributeStatement.class);
 
             Attribute attribute = createAttribute(Constants.ASSURANCE_LEVEL, "0");

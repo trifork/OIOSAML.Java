@@ -1,27 +1,30 @@
 package dk.gov.oio.saml.servlet;
 
-import dk.gov.oio.saml.util.IdpUtil;
-import dk.gov.oio.saml.util.TestConstants;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.zip.Deflater;
 import java.util.zip.DeflaterOutputStream;
-import javax.servlet.ServletOutputStream;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-import net.shibboleth.utilities.java.support.codec.Base64Support;
-import net.shibboleth.utilities.java.support.xml.SerializeSupport;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.opensaml.core.xml.XMLObject;
 import org.opensaml.core.xml.util.XMLObjectSupport;
 import org.opensaml.messaging.context.MessageContext;
-import org.opensaml.saml.common.SAMLObject;
 import org.opensaml.saml.saml2.core.LogoutRequest;
 import org.opensaml.saml.saml2.core.NameID;
 import org.opensaml.saml.saml2.core.StatusCode;
 import org.w3c.dom.Element;
+
+import dk.gov.oio.saml.util.IdpUtil;
+import dk.gov.oio.saml.util.TestConstants;
+import jakarta.servlet.ServletOutputStream;
+import jakarta.servlet.WriteListener;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+import net.shibboleth.shared.codec.Base64Support;
+import net.shibboleth.shared.xml.SerializeSupport;
 
 public class LogoutResponseHandlerTest {
 
@@ -33,8 +36,8 @@ public class LogoutResponseHandlerTest {
         LogoutRequest logoutRequest = IdpUtil.createLogoutRequest(nameID, NameID.PERSISTENT, TestConstants.IDP_LOGOUT_REQUEST_URL);
 
         //Create logoutResponse, marshall deflate and encode
-        MessageContext<SAMLObject> messageContext = IdpUtil.createMessageWithLogoutResponse(logoutRequest, TestConstants.SP_LOGOUT_RESPONSE_URL, StatusCode.SUCCESS);
-        Element marshalledMessage = XMLObjectSupport.marshall(messageContext.getMessage());
+        MessageContext messageContext = IdpUtil.createMessageWithLogoutResponse(logoutRequest, TestConstants.SP_LOGOUT_RESPONSE_URL, StatusCode.SUCCESS);
+        Element marshalledMessage = XMLObjectSupport.marshall((XMLObject) messageContext.getMessage());
         final String messageStr = SerializeSupport.nodeToString(marshalledMessage);
 
         // Deflate
@@ -73,8 +76,8 @@ public class LogoutResponseHandlerTest {
         LogoutRequest logoutRequest = IdpUtil.createLogoutRequest(nameID, NameID.PERSISTENT, TestConstants.IDP_LOGOUT_REQUEST_URL);
 
         //Create logoutResponse, marshall deflate and encode
-        MessageContext<SAMLObject> messageContext = IdpUtil.createMessageWithLogoutResponse(logoutRequest, TestConstants.SP_LOGOUT_RESPONSE_URL, StatusCode.RESPONDER);
-        Element marshalledMessage = XMLObjectSupport.marshall(messageContext.getMessage());
+        MessageContext messageContext = IdpUtil.createMessageWithLogoutResponse(logoutRequest, TestConstants.SP_LOGOUT_RESPONSE_URL, StatusCode.RESPONDER);
+        Element marshalledMessage = XMLObjectSupport.marshall((XMLObject) messageContext.getMessage());
         final String messageStr = SerializeSupport.nodeToString(marshalledMessage);
 
         // Deflate
@@ -109,6 +112,16 @@ public class LogoutResponseHandlerTest {
         @Override
         public void write(int i) throws IOException {
             //Do nothing
+        }
+
+        @Override
+        public boolean isReady() {
+            throw new UnsupportedOperationException("Unimplemented method 'isReady'");
+        }
+
+        @Override
+        public void setWriteListener(WriteListener writeListener) {
+            throw new UnsupportedOperationException("Unimplemented method 'setWriteListener'");
         }
     }
 }

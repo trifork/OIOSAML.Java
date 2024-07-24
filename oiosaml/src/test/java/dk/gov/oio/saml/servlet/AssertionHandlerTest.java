@@ -10,17 +10,18 @@ import dk.gov.oio.saml.util.IdpUtil;
 import dk.gov.oio.saml.util.InternalException;
 import dk.gov.oio.saml.util.TestConstants;
 import java.util.UUID;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-import net.shibboleth.utilities.java.support.codec.Base64Support;
-import net.shibboleth.utilities.java.support.xml.SerializeSupport;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+import net.shibboleth.shared.codec.Base64Support;
+import net.shibboleth.shared.xml.SerializeSupport;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
+import org.opensaml.core.xml.XMLObject;
 import org.opensaml.core.xml.util.XMLObjectSupport;
 import org.opensaml.messaging.context.MessageContext;
 import org.opensaml.saml.common.SAMLObject;
@@ -43,16 +44,16 @@ public class AssertionHandlerTest {
         // Create MessageContext, Response and Assertion
         String nameID = "https://data.gov.dk/model/core/eid/person/uuid/37a5a1aa-67ce-4f70-b7c0-b8e678d585f7";
         String inResponseToId = UUID.randomUUID().toString();
-        MessageContext<SAMLObject> messageContext = IdpUtil.createMessageWithAssertion(true, true, true,  nameID, TestConstants.SP_ENTITY_ID, TestConstants.SP_ASSERTION_CONSUMER_URL, inResponseToId);
+        MessageContext messageContext = IdpUtil.createMessageWithAssertion(true, true, true,  nameID, TestConstants.SP_ENTITY_ID, TestConstants.SP_ASSERTION_CONSUMER_URL, inResponseToId);
 
         // Marshall serialize and base64 Encode message (Same way HTTPPostEncoder handles outgoing saml requests)
-        Element marshalledMessage = XMLObjectSupport.marshall(messageContext.getMessage());
+        Element marshalledMessage = XMLObjectSupport.marshall((XMLObject) messageContext.getMessage());
         String messageXML = SerializeSupport.nodeToString(marshalledMessage);
         String base64EncodedMessage = Base64Support.encode(messageXML.getBytes("UTF-8"), Base64Support.UNCHUNKED);
 
         // Create AuthnRequest
         AuthnRequestService authnRequestService = new AuthnRequestService();
-        MessageContext<SAMLObject> authnRequestMessageContext = authnRequestService.createMessageWithAuthnRequest(false, false, NSISLevel.SUBSTANTIAL, null, null, null);
+        MessageContext authnRequestMessageContext = authnRequestService.createMessageWithAuthnRequest(false, false, NSISLevel.SUBSTANTIAL, null, null, null);
         AuthnRequest authnRequest = (AuthnRequest) authnRequestMessageContext.getMessage();
         authnRequest.setID(inResponseToId);
         AuthnRequestWrapper wrapper = new AuthnRequestWrapper(authnRequest, NSISLevel.SUBSTANTIAL, "");
@@ -91,16 +92,16 @@ public class AssertionHandlerTest {
         // Create MessageContext, Response and Assertion
         String nameID = "https://data.gov.dk/model/core/eid/person/uuid/37a5a1aa-67ce-4f70-b7c0-b8e678d585f7";
         String inResponseToId = UUID.randomUUID().toString();
-        MessageContext<SAMLObject> messageContext = IdpUtil.createMessageWithAssertion(true, false, true,  nameID, TestConstants.SP_ENTITY_ID, TestConstants.SP_ASSERTION_CONSUMER_URL, inResponseToId);
+        MessageContext messageContext = IdpUtil.createMessageWithAssertion(true, false, true,  nameID, TestConstants.SP_ENTITY_ID, TestConstants.SP_ASSERTION_CONSUMER_URL, inResponseToId);
 
         // Marshall serialize and base64 Encode message (Same way HTTPPostEncoder handles outgoing saml requests)
-        Element marshalledMessage = XMLObjectSupport.marshall(messageContext.getMessage());
+        Element marshalledMessage = XMLObjectSupport.marshall((XMLObject) messageContext.getMessage());
         String messageXML = SerializeSupport.nodeToString(marshalledMessage);
         String base64EncodedMessage = Base64Support.encode(messageXML.getBytes("UTF-8"), Base64Support.UNCHUNKED);
 
         // Create AuthnRequest
         AuthnRequestService authnRequestService = new AuthnRequestService();
-        MessageContext<SAMLObject> authnRequestMessageContext = authnRequestService.createMessageWithAuthnRequest(false, false, NSISLevel.SUBSTANTIAL, null, null, null);
+        MessageContext authnRequestMessageContext = authnRequestService.createMessageWithAuthnRequest(false, false, NSISLevel.SUBSTANTIAL, null, null, null);
         AuthnRequest authnRequest = (AuthnRequest) authnRequestMessageContext.getMessage();
         authnRequest.setID(inResponseToId);
         AuthnRequestWrapper wrapper = new AuthnRequestWrapper(authnRequest, NSISLevel.SUBSTANTIAL, "");

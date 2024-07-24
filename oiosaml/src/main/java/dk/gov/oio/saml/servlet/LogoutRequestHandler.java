@@ -1,31 +1,34 @@
 package dk.gov.oio.saml.servlet;
 
 import java.io.IOException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.opensaml.core.xml.io.MarshallingException;
-import org.opensaml.saml.saml2.core.SessionIndex;
-import org.opensaml.saml.saml2.metadata.SingleLogoutService;
 import org.opensaml.core.config.InitializationException;
+import org.opensaml.core.xml.io.MarshallingException;
 import org.opensaml.messaging.context.MessageContext;
 import org.opensaml.messaging.encoder.MessageEncodingException;
-import org.opensaml.saml.common.SAMLObject;
 import org.opensaml.saml.saml2.core.LogoutRequest;
+import org.opensaml.saml.saml2.core.SessionIndex;
+import org.opensaml.saml.saml2.metadata.SingleLogoutService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.w3c.dom.Element;
 
-import dk.gov.oio.saml.session.AssertionWrapper;
-import dk.gov.oio.saml.session.LogoutRequestWrapper;
-import dk.gov.oio.saml.session.SessionHandler;
-import dk.gov.oio.saml.util.*;
 import dk.gov.oio.saml.config.Configuration;
 import dk.gov.oio.saml.service.IdPMetadataService;
 import dk.gov.oio.saml.service.LogoutRequestService;
 import dk.gov.oio.saml.service.LogoutResponseService;
 import dk.gov.oio.saml.service.OIOSAML3Service;
-import net.shibboleth.utilities.java.support.component.ComponentInitializationException;
-import org.w3c.dom.Element;
+import dk.gov.oio.saml.session.AssertionWrapper;
+import dk.gov.oio.saml.session.LogoutRequestWrapper;
+import dk.gov.oio.saml.session.SessionHandler;
+import dk.gov.oio.saml.util.AuditRequestUtil;
+import dk.gov.oio.saml.util.ExternalException;
+import dk.gov.oio.saml.util.InternalException;
+import dk.gov.oio.saml.util.SamlHelper;
+import dk.gov.oio.saml.util.StringUtil;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import net.shibboleth.shared.component.ComponentInitializationException;
 
 public class LogoutRequestHandler extends SAMLHandler {
     private static final Logger log = LoggerFactory.getLogger(LogoutRequestHandler.class);
@@ -39,10 +42,10 @@ public class LogoutRequestHandler extends SAMLHandler {
         }
 
         // IdP Initiated, generate response
-        MessageContext<SAMLObject> context = decodeGet(httpServletRequest);
+        MessageContext context = decodeGet(httpServletRequest);
         LogoutRequest logoutRequest = getSamlObject(context, LogoutRequest.class);
 
-        MessageContext<SAMLObject> outgoingMessage = handleRequest(httpServletRequest, new LogoutRequestWrapper(logoutRequest));
+        MessageContext outgoingMessage = handleRequest(httpServletRequest, new LogoutRequestWrapper(logoutRequest));
         try {
             sendPost(httpServletResponse, outgoingMessage);
         } catch (ComponentInitializationException | MessageEncodingException e) {
@@ -59,10 +62,10 @@ public class LogoutRequestHandler extends SAMLHandler {
     public void handleSOAP(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) throws ExternalException, InternalException {
         log.debug("Handling SOAP LogoutRequest");
         // IdP Initiated, generate response
-        MessageContext<SAMLObject> context = decodeSOAP(httpServletRequest);
+        MessageContext context = decodeSOAP(httpServletRequest);
         LogoutRequest logoutRequest = getSamlObject(context, LogoutRequest.class);
 
-        MessageContext<SAMLObject> outgoingMessage = handleRequest(httpServletRequest, new LogoutRequestWrapper(logoutRequest));
+        MessageContext outgoingMessage = handleRequest(httpServletRequest, new LogoutRequestWrapper(logoutRequest));
         try {
             sendSOAP(httpServletResponse, outgoingMessage);
         } catch (ComponentInitializationException | MessageEncodingException e) {
@@ -130,7 +133,7 @@ public class LogoutRequestHandler extends SAMLHandler {
 
             String location = logoutEndpoint.getLocation();
 
-            MessageContext<SAMLObject> messageContext = LogoutRequestService.createMessageWithLogoutRequest(assertion.getSubjectNameId(), assertion.getSubjectNameIdFormat(), location, assertion.getSessionIndex());
+            MessageContext messageContext = LogoutRequestService.createMessageWithLogoutRequest(assertion.getSubjectNameId(), assertion.getSubjectNameIdFormat(), location, assertion.getSessionIndex());
             LogoutRequestWrapper logoutRequest = new LogoutRequestWrapper(getSamlObject(messageContext, LogoutRequest.class));
 
             OIOSAML3Service.getAuditService().auditLog(AuditRequestUtil
@@ -160,7 +163,7 @@ public class LogoutRequestHandler extends SAMLHandler {
         }
     }
 
-    private MessageContext<SAMLObject> handleRequest(HttpServletRequest httpServletRequest, LogoutRequestWrapper logoutRequest) throws ExternalException, InternalException {
+    private MessageContext handleRequest(HttpServletRequest httpServletRequest, LogoutRequestWrapper logoutRequest) throws ExternalException, InternalException {
         log.debug("Handling LogoutRequest");
         SessionHandler sessionHandler = OIOSAML3Service.getSessionHandlerFactory().getHandler();
 
@@ -194,12 +197,12 @@ public class LogoutRequestHandler extends SAMLHandler {
                     .withAuthnAttribute("REQUEST", "INVALID"));
         } else {
             for (SessionIndex sessionIndex : logoutRequest.getSessionIndexes()) {
-                AssertionWrapper assertion = sessionHandler.getAssertion(sessionIndex.getSessionIndex());
+                AssertionWrapper assertion = sessionHandler.getAssertion(sessionIndex.getValue());
                 if (null == assertion) {
                     OIOSAML3Service.getAuditService().auditLog(AuditRequestUtil
                             .createBasicAuditBuilder(httpServletRequest, "SLO4", "InvalidatedSession")
                             .withAuthnAttribute("LOGOUT_REQUEST_ID", logoutRequest.getID())
-                            .withAuthnAttribute("SP_SESSION_INDEX", sessionIndex.getSessionIndex())
+                            .withAuthnAttribute("SP_SESSION_INDEX", sessionIndex.getValue())
                             .withAuthnAttribute("REQUEST", "INVALID"));
                     continue;
                 }
@@ -208,8 +211,8 @@ public class LogoutRequestHandler extends SAMLHandler {
                 OIOSAML3Service.getAuditService().auditLog(AuditRequestUtil
                         .createBasicAuditBuilder(httpServletRequest, "SLO4", "InvalidatedSession")
                         .withAuthnAttribute("LOGOUT_REQUEST_ID", logoutRequest.getID())
-                        .withAuthnAttribute("SP_SESSION_INDEX", sessionIndex.getSessionIndex())
-                        .withAuthnAttribute("SP_SESSION_ID", sessionHandler.getSessionId(sessionIndex.getSessionIndex()))
+                        .withAuthnAttribute("SP_SESSION_INDEX", sessionIndex.getValue())
+                        .withAuthnAttribute("SP_SESSION_ID", sessionHandler.getSessionId(sessionIndex.getValue()))
                         .withAuthnAttribute("ASSERTION_ID", assertion.getID())
                         .withAuthnAttribute("SUBJECT_NAME_ID", assertion.getSubjectNameId())
                         .withAuthnAttribute("REQUEST", "VALID"));
@@ -223,7 +226,7 @@ public class LogoutRequestHandler extends SAMLHandler {
         try {
             IdPMetadataService metadataService = IdPMetadataService.getInstance();
             String logoutResponseEndpoint = metadataService.getLogoutResponseEndpoint(logoutRequest.getIssuerAsString()); // Has to be from the specific IdP that verified the user
-            MessageContext<SAMLObject> messageContext = LogoutResponseService.createMessageWithLogoutResponse(logoutRequest, logoutResponseEndpoint);
+            MessageContext messageContext = LogoutResponseService.createMessageWithLogoutResponse(logoutRequest, logoutResponseEndpoint);
 
             // Log LogoutRequest
             try {

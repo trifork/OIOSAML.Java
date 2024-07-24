@@ -3,7 +3,6 @@ package dk.gov.oio.saml.util;
 import java.util.HashMap;
 import java.util.Map;
 import javax.xml.namespace.QName;
-import net.shibboleth.utilities.java.support.xml.SerializeSupport;
 import org.opensaml.core.config.ConfigurationService;
 import org.opensaml.core.xml.XMLObject;
 import org.opensaml.core.xml.XMLObjectBuilderFactory;
@@ -23,6 +22,8 @@ import org.opensaml.saml.saml2.core.AttributeValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Element;
+
+import net.shibboleth.shared.xml.SerializeSupport;
 
 public class SamlHelper {
     private static final Logger log = LoggerFactory.getLogger(SamlHelper.class);

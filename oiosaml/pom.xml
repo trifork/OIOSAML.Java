@@ -4,7 +4,7 @@
     <artifactId>oiosaml3.java</artifactId>
     <name>OIOSAML for Java v3</name>
     <packaging>jar</packaging>
-    <version>3.2.2-trifork-8-SNAPSHOT</version>
+    <version>3.2.2-trifork-jakarta-1-SNAPSHOT</version>
     <description>SAML Servlet Filter, configured to work with the danish SAML profile OIOSAML 3.0.0</description>
     <url>https://digitaliser.dk/group/42063/resources</url>
 
@@ -24,6 +24,17 @@
         </developer>
     </developers>
 
+    <repositories>
+        <repository>
+            <id>trifork-public</id>
+            <name>Trifork public Nexus</name>
+            <url>https://ci.fmk.netic.dk/nexus/content/groups/public/</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+    
     <scm>
         <connection>scm:git:git@github.com:trifork/OIOSAML.Java.git</connection>
         <developerConnection>scm:git:git@github.com:trifork/OIOSAML.Java.git</developerConnection>
@@ -34,9 +45,9 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.version>1.8.0</java.version>
         <maven.deploy.skip>false</maven.deploy.skip>
-        <jaxb.api.version>2.3.3</jaxb.api.version>
-        <jaxb.version>2.3.9</jaxb.version>
-        <opensaml.version>3.4.6</opensaml.version>
+        <jaxb.api.version>3.0.1</jaxb.api.version>
+        <jaxb.version>3.0.2</jaxb.version>
+        <opensaml.version>5.1.2</opensaml.version>
     </properties>
 
     <profiles>
@@ -129,7 +140,12 @@
     <dependencies>
         <dependency>
             <groupId>org.opensaml</groupId>
-            <artifactId>opensaml-core</artifactId>
+            <artifactId>opensaml-core-impl</artifactId>
+            <version>${opensaml.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.opensaml</groupId>
+            <artifactId>opensaml-core-api</artifactId>
             <version>${opensaml.version}</version>
         </dependency>
 
@@ -163,9 +179,9 @@
         </dependency>
 
         <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>javax.servlet-api</artifactId>
-            <version>3.0.1</version>
+            <groupId>jakarta.servlet</groupId>
+            <artifactId>jakarta.servlet-api</artifactId>
+            <version>5.0.0</version>
             <scope>provided</scope>
         </dependency>
 

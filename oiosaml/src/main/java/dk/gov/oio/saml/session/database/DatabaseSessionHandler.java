@@ -38,8 +38,8 @@ import org.opensaml.saml.saml2.core.LogoutRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import javax.sql.DataSource;
 import java.io.StringReader;
 import java.sql.*;

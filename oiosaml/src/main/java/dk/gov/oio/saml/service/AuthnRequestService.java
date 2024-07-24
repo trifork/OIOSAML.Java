@@ -1,17 +1,14 @@
 package dk.gov.oio.saml.service;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import javax.servlet.http.HttpServletRequest;
-
-import org.apache.commons.lang.StringUtils;
-import org.joda.time.DateTime;
+import org.apache.commons.lang3.StringUtils;
 import org.opensaml.core.config.InitializationException;
 import org.opensaml.messaging.context.MessageContext;
 import org.opensaml.messaging.decoder.MessageDecodingException;
-import org.opensaml.saml.common.SAMLObject;
 import org.opensaml.saml.common.binding.SAMLBindingSupport;
 import org.opensaml.saml.common.messaging.context.SAMLEndpointContext;
 import org.opensaml.saml.common.messaging.context.SAMLPeerEntityContext;
@@ -44,9 +41,10 @@ import dk.gov.oio.saml.util.Constants;
 import dk.gov.oio.saml.util.ExternalException;
 import dk.gov.oio.saml.util.InternalException;
 import dk.gov.oio.saml.util.SamlHelper;
-import net.shibboleth.utilities.java.support.component.ComponentInitializationException;
-import net.shibboleth.utilities.java.support.security.RandomIdentifierGenerationStrategy;
-import net.shibboleth.utilities.java.support.xml.BasicParserPool;
+import jakarta.servlet.http.HttpServletRequest;
+import net.shibboleth.shared.component.ComponentInitializationException;
+import net.shibboleth.shared.security.impl.RandomIdentifierGenerationStrategy;
+import net.shibboleth.shared.xml.impl.BasicParserPool;
 
 public class AuthnRequestService {
     private static final Logger log = LoggerFactory.getLogger(AuthnRequestService.class);
@@ -59,11 +57,11 @@ public class AuthnRequestService {
     }
 
     // Credential service
-    public MessageContext<SAMLObject> getMessageContext(HttpServletRequest request) throws ComponentInitializationException, MessageDecodingException {
+    public MessageContext getMessageContext(HttpServletRequest request) throws ComponentInitializationException, MessageDecodingException {
         log.debug("Decoding Http Redirect deflate");
 
         HTTPRedirectDeflateDecoder decoder = new HTTPRedirectDeflateDecoder();
-            decoder.setHttpServletRequest(request);
+            decoder.setHttpServletRequestSupplier(() -> request);
 
             BasicParserPool parserPool = new BasicParserPool();
             parserPool.initialize();
@@ -72,20 +70,20 @@ public class AuthnRequestService {
             decoder.initialize();
             decoder.decode();
 
-            MessageContext<SAMLObject> msgContext = decoder.getMessageContext();
+            MessageContext msgContext = decoder.getMessageContext();
             decoder.destroy();
 
             return msgContext;
     }
 
     public AuthnRequest getAuthnRequest(HttpServletRequest request) throws ComponentInitializationException, MessageDecodingException {
-        MessageContext<SAMLObject> messageContext = getMessageContext(request);
+        MessageContext messageContext = getMessageContext(request);
         return (AuthnRequest) messageContext.getMessage();
     }
 
-    public MessageContext<SAMLObject> createMessageWithAuthnRequest(boolean isPassive, boolean forceAuthn, NSISLevel requiredNsisLevel, String attributeProfile, AppSwitchPlatform platform, String selectedIdp) throws InternalException, ExternalException, InitializationException {
+    public MessageContext createMessageWithAuthnRequest(boolean isPassive, boolean forceAuthn, NSISLevel requiredNsisLevel, String attributeProfile, AppSwitchPlatform platform, String selectedIdp) throws InternalException, ExternalException, InitializationException {
         // Create message context
-        MessageContext<SAMLObject> messageContext = new MessageContext<>();
+        MessageContext messageContext = new MessageContext();
 
         // Get Destination URL from IdP metadata
         if (selectedIdp == null) {
@@ -152,7 +150,7 @@ public class AuthnRequestService {
 
         // Set Values
         authnRequest.setDestination(destination);
-        authnRequest.setIssueInstant(new DateTime());
+        authnRequest.setIssueInstant(Instant.now());
         authnRequest.setIsPassive(isPassive);
         authnRequest.setForceAuthn(forceAuthn);
         authnRequest.setProtocolBinding(SAMLConstants.SAML2_POST_BINDING_URI);
@@ -169,14 +167,14 @@ public class AuthnRequestService {
         // Set Requested LOA if supplied
         if (requiredNsisLevel != null && requiredNsisLevel != NSISLevel.NONE) {
             AuthnContextClassRef authnContextClassRef = SamlHelper.build(AuthnContextClassRef.class);
-            authnContextClassRef.setAuthnContextClassRef(requiredNsisLevel.getUrl());
+            authnContextClassRef.setURI(requiredNsisLevel.getUrl());
             authnContextClassRefs.add(authnContextClassRef);
         }
 
         // Set Requested AttributeProfile if supplied
         if (Constants.ATTRIBUTE_PROFILE_PERSON.equals(attributeProfile) || Constants.ATTRIBUTE_PROFILE_PROFESSIONAL.equals(attributeProfile)) {
             AuthnContextClassRef authnContextClassRef = SamlHelper.build(AuthnContextClassRef.class);
-            authnContextClassRef.setAuthnContextClassRef(attributeProfile);
+            authnContextClassRef.setURI(attributeProfile);
 
             authnContextClassRefs.add(authnContextClassRef);
         }

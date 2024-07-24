@@ -26,8 +26,8 @@ package dk.gov.oio.saml.session;
 import dk.gov.oio.saml.service.OIOSAML3Service;
 import dk.gov.oio.saml.util.InternalException;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 
 /**
  * Handle session state across requests and instances.

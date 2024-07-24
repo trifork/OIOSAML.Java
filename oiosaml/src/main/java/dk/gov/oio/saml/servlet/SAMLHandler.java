@@ -2,10 +2,10 @@ package dk.gov.oio.saml.servlet;
 
 import java.io.IOException;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import net.shibboleth.shared.component.ComponentInitializationException;
 
-import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.opensaml.core.config.InitializationException;
@@ -21,8 +21,6 @@ import org.opensaml.saml.saml2.binding.encoding.impl.HTTPRedirectDeflateEncoder;
 
 import dk.gov.oio.saml.util.ExternalException;
 import dk.gov.oio.saml.util.InternalException;
-import net.shibboleth.utilities.java.support.component.ComponentInitializationException;
-import net.shibboleth.utilities.java.support.velocity.VelocityEngine;
 import org.opensaml.saml.saml2.binding.encoding.impl.HTTPSOAP11Encoder;
 
 public abstract class SAMLHandler {
@@ -31,15 +29,15 @@ public abstract class SAMLHandler {
     public abstract void handleGet(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) throws IOException, ExternalException, InternalException, InitializationException;
     public abstract void handlePost(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) throws ExternalException, InternalException, IOException;
     public void handleSOAP(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) throws ExternalException, InternalException, IOException {
-        httpServletResponse.sendError(HttpStatus.SC_FORBIDDEN);
+        httpServletResponse.sendError(HttpServletResponse.SC_FORBIDDEN);
     }
 
-    MessageContext<SAMLObject> decodeGet(HttpServletRequest httpServletRequest) throws InternalException, ExternalException {
+    MessageContext decodeGet(HttpServletRequest httpServletRequest) throws InternalException, ExternalException {
         try {
             log.debug("Decoding message as HTTPRedirect");
 
             HTTPRedirectDeflateDecoder decoder = new HTTPRedirectDeflateDecoder();
-            decoder.setHttpServletRequest(httpServletRequest);
+            decoder.setHttpServletRequestSupplier(() -> httpServletRequest);
 
             decoder.initialize();
             decoder.decode();
@@ -53,12 +51,12 @@ public abstract class SAMLHandler {
         }
     }
 
-    MessageContext<SAMLObject> decodePost(HttpServletRequest httpServletRequest) throws InternalException, ExternalException {
+    MessageContext decodePost(HttpServletRequest httpServletRequest) throws InternalException, ExternalException {
         try {
             log.debug("Decoding message as HTTP Post");
 
             HTTPPostDecoder decoder = new HTTPPostDecoder();
-            decoder.setHttpServletRequest(httpServletRequest);
+            decoder.setHttpServletRequestSupplier(() -> httpServletRequest);
 
             decoder.initialize();
             decoder.decode();
@@ -72,12 +70,12 @@ public abstract class SAMLHandler {
         }
     }
 
-    MessageContext<SAMLObject> decodeSOAP(HttpServletRequest httpServletRequest) throws InternalException, ExternalException {
+    MessageContext decodeSOAP(HttpServletRequest httpServletRequest) throws InternalException, ExternalException {
         try {
             log.debug("Decoding message as HTTP SOAP11");
 
             HTTPSOAP11Decoder decoder = new HTTPSOAP11Decoder();
-            decoder.setHttpServletRequest(httpServletRequest);
+            decoder.setHttpServletRequestSupplier(() -> httpServletRequest);
 
             decoder.initialize();
             decoder.decode();
@@ -91,37 +89,39 @@ public abstract class SAMLHandler {
         }
     }
 
-    void sendGet(HttpServletResponse httpServletResponse, MessageContext<SAMLObject> message) throws ComponentInitializationException, MessageEncodingException {
+    void sendGet(HttpServletResponse httpServletResponse, MessageContext message) throws ComponentInitializationException, MessageEncodingException {
         log.debug("Encoding, deflating and sending message (HTTPRedirect)");
 
         HTTPRedirectDeflateEncoder encoder = new HTTPRedirectDeflateEncoder();
 
-        encoder.setHttpServletResponse(httpServletResponse);
+        encoder.setHttpServletResponseSupplier(() -> httpServletResponse);
         encoder.setMessageContext(message);
 
         encoder.initialize();
         encoder.encode();
     }
 
-    void sendPost(HttpServletResponse httpServletResponse, MessageContext<SAMLObject> message) throws ComponentInitializationException, MessageEncodingException {
+    void sendPost(HttpServletResponse httpServletResponse, MessageContext message) throws ComponentInitializationException, MessageEncodingException {
         log.debug("Encoding and sending message (HTTPPost)");
 
         HTTPPostEncoder encoder = new HTTPPostEncoder();
 
-        encoder.setHttpServletResponse(httpServletResponse);
+        encoder.setHttpServletResponseSupplier(() -> httpServletResponse);
         encoder.setMessageContext(message);
-        encoder.setVelocityEngine(VelocityEngine.newVelocityEngine());
+
+        log.info("DO WE STILL NEED TO SET VELOCITY ENGINE?????????????");
+        // encoder.setVelocityEngine(VelocityEngine.newVelocityEngine());
 
         encoder.initialize();
         encoder.encode();
     }
 
-    void sendSOAP(HttpServletResponse httpServletResponse, MessageContext<SAMLObject> message) throws ComponentInitializationException, MessageEncodingException {
+    void sendSOAP(HttpServletResponse httpServletResponse, MessageContext message) throws ComponentInitializationException, MessageEncodingException {
         log.debug("Encoding and sending message (SOAP)");
 
         HTTPSOAP11Encoder encoder = new HTTPSOAP11Encoder();
 
-        encoder.setHttpServletResponse(httpServletResponse);
+        encoder.setHttpServletResponseSupplier(() -> httpServletResponse);
         encoder.setMessageContext(message);
 
         encoder.initialize();
@@ -129,8 +129,8 @@ public abstract class SAMLHandler {
         encoder.encode();
     }
 
-    <T> T getSamlObject(MessageContext<SAMLObject> context, Class<T> clazz) throws ExternalException {
-        SAMLObject samlObject = context.getMessage();
+    <T> T getSamlObject(MessageContext context, Class<T> clazz) throws ExternalException {
+        SAMLObject samlObject = (SAMLObject) context.getMessage();
         if (samlObject == null) {
             throw new ExternalException("Saml message was null");
         }

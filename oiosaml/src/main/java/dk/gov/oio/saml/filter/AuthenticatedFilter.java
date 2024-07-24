@@ -5,17 +5,17 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-
+import jakarta.servlet.Filter;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.FilterConfig;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+import net.shibboleth.shared.component.ComponentInitializationException;
 import dk.gov.oio.saml.config.Configuration;
 import dk.gov.oio.saml.extensions.appswitch.AppSwitchPlatform;
 import dk.gov.oio.saml.service.OIOSAML3Service;
@@ -32,7 +32,6 @@ import org.opensaml.saml.saml2.core.AuthnRequest;
 
 import dk.gov.oio.saml.model.NSISLevel;
 import dk.gov.oio.saml.service.AuthnRequestService;
-import net.shibboleth.utilities.java.support.component.ComponentInitializationException;
 
 public class AuthenticatedFilter implements Filter {
     private static final Logger log = LoggerFactory.getLogger(AuthenticatedFilter.class);
@@ -100,7 +99,7 @@ public class AuthenticatedFilter implements Filter {
                 }
                 Cookie selectedIdp = Arrays.asList(cookies).stream().filter(c -> "_saml_idp".equals(c.getName())).findAny().orElse(null);
                 String entityID = selectedIdp != null ? URLDecoder.decode(selectedIdp.getValue(), StandardCharsets.UTF_8.name()) : null;
-                MessageContext<SAMLObject> authnRequest = authnRequestService.createMessageWithAuthnRequest(isPassive, forceAuthn, requiredNsisLevel, attributeProfile, appSwitchPlatform, entityID);
+                MessageContext authnRequest = authnRequestService.createMessageWithAuthnRequest(isPassive, forceAuthn, requiredNsisLevel, attributeProfile, appSwitchPlatform, entityID);
 
                 //Audit logging
                 OIOSAML3Service.getAuditService().auditLog(AuditRequestUtil
@@ -183,9 +182,9 @@ public class AuthenticatedFilter implements Filter {
         }
     }
 
-    private void sendAuthnRequest(HttpServletRequest req, HttpServletResponse res, MessageContext<SAMLObject> authnRequest, NSISLevel requestedNsisLevel, String requestPath) throws InternalException {
+    private void sendAuthnRequest(HttpServletRequest req, HttpServletResponse res, MessageContext authnRequest, NSISLevel requestedNsisLevel, String requestPath) throws InternalException {
         try {
-            log.debug("AuthnRequest: {}", StringUtil.elementToString(SamlHelper.marshallObject(authnRequest.getMessage())));
+            log.debug("AuthnRequest: {}", StringUtil.elementToString(SamlHelper.marshallObject((SAMLObject)authnRequest.getMessage())));
         }
         catch (MarshallingException e) {
             log.warn("Could not marshall AuthnRequest for logging purposes");
@@ -202,7 +201,7 @@ public class AuthenticatedFilter implements Filter {
         // Deflating and sending the message
         HTTPRedirectDeflateEncoder encoder = new HTTPRedirectDeflateEncoder();
         encoder.setMessageContext(authnRequest);
-        encoder.setHttpServletResponse(res);
+        encoder.setHttpServletResponseSupplier(() -> res);
 
         try {
             OIOSAML3Service.getAuditService().auditLog(AuditRequestUtil

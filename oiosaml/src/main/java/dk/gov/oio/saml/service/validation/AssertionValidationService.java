@@ -1,19 +1,15 @@
 package dk.gov.oio.saml.service.validation;
 
 import java.security.cert.X509Certificate;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
-import javax.servlet.http.HttpServletRequest;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.joda.time.DateTime;
 import org.opensaml.messaging.context.MessageContext;
 import org.opensaml.messaging.handler.MessageHandlerException;
-import org.opensaml.saml.common.SAMLObject;
 import org.opensaml.saml.common.assertion.AssertionValidationException;
 import org.opensaml.saml.common.binding.security.impl.MessageLifetimeSecurityHandler;
 import org.opensaml.saml.common.binding.security.impl.ReceivedEndpointSecurityHandler;
@@ -35,6 +31,8 @@ import org.opensaml.security.credential.UsageType;
 import org.opensaml.security.x509.BasicX509Credential;
 import org.opensaml.xmlsec.signature.support.SignatureException;
 import org.opensaml.xmlsec.signature.support.SignatureValidator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import dk.gov.oio.saml.config.Configuration;
 import dk.gov.oio.saml.model.IdPMetadata;
@@ -46,12 +44,13 @@ import dk.gov.oio.saml.util.Constants;
 import dk.gov.oio.saml.util.ExternalException;
 import dk.gov.oio.saml.util.InternalException;
 import dk.gov.oio.saml.util.SamlHelper;
-import net.shibboleth.utilities.java.support.component.ComponentInitializationException;
+import jakarta.servlet.http.HttpServletRequest;
+import net.shibboleth.shared.component.ComponentInitializationException;
 
 public class AssertionValidationService {
     private static final Logger log = LoggerFactory.getLogger(AssertionValidationService.class);
 
-    public void validate(HttpServletRequest httpServletRequest, MessageContext<SAMLObject> messageContext, Response response, Assertion assertion, AuthnRequestWrapper authnRequest) throws AssertionValidationException, InternalException, ExternalException {
+    public void validate(HttpServletRequest httpServletRequest, MessageContext messageContext, Response response, Assertion assertion, AuthnRequestWrapper authnRequest) throws AssertionValidationException, InternalException, ExternalException {
         if (OIOSAML3Service.getConfig().isEndpointURIValidationEnabled()) {
             validateDestination(httpServletRequest, messageContext);
         }
@@ -61,11 +60,11 @@ public class AssertionValidationService {
     }
 
     @SuppressWarnings("unchecked")
-    private void validateDestination(HttpServletRequest httpServletRequest, MessageContext<SAMLObject> messageContext) throws InternalException, ExternalException {
+    private void validateDestination(HttpServletRequest httpServletRequest, MessageContext messageContext) throws InternalException, ExternalException {
         ReceivedEndpointSecurityHandler endpointSecurityHandler = null;
         try {
             endpointSecurityHandler = new ReceivedEndpointSecurityHandler();
-            endpointSecurityHandler.setHttpServletRequest(httpServletRequest);
+            endpointSecurityHandler.setHttpServletRequestSupplier(() -> httpServletRequest);
             endpointSecurityHandler.initialize();
             endpointSecurityHandler.invoke(messageContext);
         }
@@ -83,13 +82,13 @@ public class AssertionValidationService {
     }
 
     @SuppressWarnings("unchecked")
-    private void validateLifetime(MessageContext<SAMLObject> messageContext, Response response, Assertion assertion) throws InternalException, AssertionValidationException {
+    private void validateLifetime(MessageContext messageContext, Response response, Assertion assertion) throws InternalException, AssertionValidationException {
         int clockSkew = OIOSAML3Service.getConfig().getClockSkew();
 
         MessageLifetimeSecurityHandler lifetimeHandler = null;
         try {
             lifetimeHandler = new MessageLifetimeSecurityHandler();
-            lifetimeHandler.setClockSkew(1000L * 60 * clockSkew);
+            lifetimeHandler.setClockSkew(Duration.ofMinutes(clockSkew));
             lifetimeHandler.setRequiredRule(OIOSAML3Service.getConfig().isMessageLifetimeValidationEnabled());
             lifetimeHandler.initialize();
             lifetimeHandler.invoke(messageContext);
@@ -104,8 +103,8 @@ public class AssertionValidationService {
         }
 
         //Check Assertion Issue instant
-        DateTime assertionIssueInstant = assertion.getIssueInstant();
-        if (assertionIssueInstant.isBefore(DateTime.now().minusMinutes(clockSkew))) {
+        Instant assertionIssueInstant = assertion.getIssueInstant();
+        if (assertionIssueInstant.isBefore(Instant.now().minus(Duration.ofMinutes(clockSkew)))) {
             throw new AssertionValidationException("Assertion Lifetime incorrect");
         }
 
@@ -113,13 +112,13 @@ public class AssertionValidationService {
         Conditions conditions = assertion.getConditions();
         if (conditions != null) {
             if (conditions.getNotOnOrAfter() != null) {
-                if (!DateTime.now().minusMinutes(clockSkew).isBefore(conditions.getNotOnOrAfter())) {
+                if (!Instant.now().minus(Duration.ofMinutes(clockSkew)).isBefore(conditions.getNotOnOrAfter())) {
                     throw new AssertionValidationException("Assertion conditions notOnOrAfter expired");
                 }
             }
 
             if (conditions.getNotBefore() != null) {
-                if (!DateTime.now().plusMinutes(clockSkew).isAfter(conditions.getNotBefore())) {
+                if (!Instant.now().plus(Duration.ofMinutes(clockSkew)).isAfter(conditions.getNotBefore())) {
                     throw new AssertionValidationException("Assertion conditions notBefore not reached yet");
                 }
             }
@@ -307,7 +306,7 @@ public class AssertionValidationService {
         for (AudienceRestriction audienceRestriction : audienceRestrictions) {
             List<Audience> audiences = audienceRestriction.getAudiences();
             for (Audience audience : audiences) {
-                if (audience.getAudienceURI().equals(config.getSpEntityID())) {
+                if (audience.getURI().equals(config.getSpEntityID())) {
                     found = true;
                 }
             }
@@ -398,12 +397,12 @@ public class AssertionValidationService {
             throw new AssertionValidationException("The SubjectConfirmationData element MUST contain a recipient attribute containing the SP's assertion consumer service URL");
         }
 
-        DateTime notOnOrAfter = subjectConfirmationData.getNotOnOrAfter();
+        Instant notOnOrAfter = subjectConfirmationData.getNotOnOrAfter();
         if (notOnOrAfter == null) {
             throw new AssertionValidationException("The SubjectConfirmationData element MUST a NotOnOrAfter attribute");
         }
 
-        if (!DateTime.now().isBefore(notOnOrAfter.plusMinutes(config.getClockSkew()))) {
+        if (!Instant.now().isBefore(notOnOrAfter.plus(Duration.ofMinutes(config.getClockSkew())))) {
             throw new AssertionValidationException("This instant was validated after SubjectConfirmationData 'NotOnOrAfter' attribute plus clockskew");
         }
     }

@@ -4,7 +4,7 @@
     <artifactId>oiosaml3.java</artifactId>
     <name>OIOSAML for Java v3</name>
     <packaging>jar</packaging>
-    <version>3.2.2-trifork-jakarta-1</version>
+    <version>3.2.2-trifork-jakarta-2-SNAPSHOT</version>
     <description>SAML Servlet Filter, configured to work with the danish SAML profile OIOSAML 3.0.0</description>
     <url>https://digitaliser.dk/group/42063/resources</url>
 
@@ -38,7 +38,7 @@
     <scm>
         <connection>scm:git:git@github.com:trifork/OIOSAML.Java.git</connection>
         <developerConnection>scm:git:git@github.com:trifork/OIOSAML.Java.git</developerConnection>
-        <tag>oiosaml3.java-3.2.2-trifork-jakarta-1</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <properties>

@@ -114,6 +114,11 @@ public class DispatcherServlet extends HttpServlet {
         if (StringUtil.isNotEmpty(value)) {
             configuration.setLogoutPage(value);
         }
+
+        value = config.get(Constants.SP_SESSION_FIXATION_PROTECT_ENABLED);
+        if (StringUtil.isNotEmpty(value)) {
+            configuration.setSessionFixationProtectEnabled("true".equals(value));
+        }
         
         value = config.get(Constants.IDP_METADATA_MIN_REFRESH);
         if (StringUtil.isNotEmpty(value)) {

@@ -1,9 +1,8 @@
 package dk.gov.oio.saml.config;
 
+import dk.gov.oio.saml.util.InternalException;
 import dk.gov.oio.saml.util.StringUtil;
 import org.opensaml.xmlsec.signature.support.SignatureConstants;
-
-import dk.gov.oio.saml.util.InternalException;
 
 public class Configuration {
 
@@ -35,6 +34,7 @@ public class Configuration {
     private boolean isUnsolicitedSAMLResponseAllowed = false;
     private boolean isEndpointURIValidationEnabled = true;
     private boolean isMessageLifetimeValidationEnabled = true;
+    private boolean sessionFixationProtectEnabled = true;
 
     // Metadata configuration
     private String idpEntityID; // This IdP's EntityID
@@ -121,7 +121,7 @@ public class Configuration {
     public boolean isUnsolicitedSAMLResponseAllowed() {
         return isUnsolicitedSAMLResponseAllowed;
     }
-    
+
     public void setEndpointUriValidationEnabled(boolean endpointURIValidationEnabled) {
         this.isEndpointURIValidationEnabled = endpointURIValidationEnabled;
     }
@@ -410,6 +410,14 @@ public class Configuration {
         this.sessionHandlerJndiName = sessionHandlerJndiName;
     }
 
+    public boolean isSessionFixationProtectEnabled() {
+        return sessionFixationProtectEnabled;
+    }
+
+    public void setSessionFixationProtectEnabled(boolean sessionFixationProtectEnabled) {
+        this.sessionFixationProtectEnabled = sessionFixationProtectEnabled;
+    }
+
     public String getSessionHandlerJdbcUrl() {
         return sessionHandlerJdbcUrl;
     }
@@ -533,7 +541,7 @@ public class Configuration {
             configuration.keystoreLocation = this.keystoreLocation;
             configuration.keystorePassword = this.keystorePassword;
             configuration.keyAlias = this.keyAlias;
-            configuration.servletRoutingPathPrefix = StringUtil.defaultIfEmpty(this.servletRoutingPathPrefix,"saml");
+            configuration.servletRoutingPathPrefix = StringUtil.defaultIfEmpty(this.servletRoutingPathPrefix, "saml");
             configuration.servletRoutingPathSuffixError = StringUtil.defaultIfEmpty(this.servletRoutingPathSuffixError, "error");
             configuration.servletRoutingPathSuffixMetadata = StringUtil.defaultIfEmpty(this.servletRoutingPathSuffixMetadata, "metadata");
             configuration.servletRoutingPathSuffixLogout = StringUtil.defaultIfEmpty(this.servletRoutingPathSuffixLogout, "logout");
@@ -573,7 +581,7 @@ public class Configuration {
             this.idpMetadataUrl = idpMetadataUrl;
             return this;
         }
-        
+
         public Builder setIdpMetadataFile(String idpMetadataFile) {
             this.idpMetadataFile = idpMetadataFile;
             return this;
@@ -593,34 +601,34 @@ public class Configuration {
             this.keyAlias = keyAlias;
             return this;
         }
-        
+
         public Builder setServletRoutingPathPrefix(String servletRoutingPathPrefix) {
             this.servletRoutingPathPrefix = servletRoutingPathPrefix;
             return this;
         }
-        
+
         public Builder setServletRoutingPathSuffixError(String servletRoutingPathSuffixError) {
             this.servletRoutingPathSuffixError = servletRoutingPathSuffixError;
             return this;
         }
-        
+
         public Builder setServletRoutingPathSuffixMetadata(String servletRoutingPathSuffixMetadata) {
             this.servletRoutingPathSuffixMetadata = servletRoutingPathSuffixMetadata;
             return this;
         }
-        
+
         public Builder setServletRoutingPathSuffixLogout(String servletRoutingPathSuffixLogout) {
             this.servletRoutingPathSuffixLogout = servletRoutingPathSuffixLogout;
             return this;
         }
-        
+
         public Builder setServletRoutingPathSuffixLogoutResponse(String servletRoutingPathSuffixLogoutResponse) {
-            this.servletRoutingPathSuffixLogoutResponse=servletRoutingPathSuffixLogoutResponse;
+            this.servletRoutingPathSuffixLogoutResponse = servletRoutingPathSuffixLogoutResponse;
             return this;
         }
-        
+
         public Builder setServletRoutingPathSuffixAssertion(String servletRoutingPathSuffixAssertion) {
-            this.servletRoutingPathSuffixAssertion=servletRoutingPathSuffixAssertion;
+            this.servletRoutingPathSuffixAssertion = servletRoutingPathSuffixAssertion;
             return this;
         }
 
@@ -630,32 +638,32 @@ public class Configuration {
         }
 
         public Builder setAuditRequestAttributeIP(String auditRequestAttributeIP) {
-            this.auditRequestAttributeIP=auditRequestAttributeIP;
+            this.auditRequestAttributeIP = auditRequestAttributeIP;
             return this;
         }
 
         public Builder setAuditRequestAttributePort(String auditRequestAttributePort) {
-            this.auditRequestAttributePort=auditRequestAttributePort;
+            this.auditRequestAttributePort = auditRequestAttributePort;
             return this;
         }
 
         public Builder setAuditRequestAttributeSessionId(String auditRequestAttributeSessionId) {
-            this.auditRequestAttributeSessionId=auditRequestAttributeSessionId;
+            this.auditRequestAttributeSessionId = auditRequestAttributeSessionId;
             return this;
         }
 
         public Builder setAuditRequestAttributeServiceProviderUserId(String auditRequestAttributeServiceProviderUserId) {
-            this.auditRequestAttributeServiceProviderUserId=auditRequestAttributeServiceProviderUserId;
+            this.auditRequestAttributeServiceProviderUserId = auditRequestAttributeServiceProviderUserId;
             return this;
         }
 
         public Builder setSessionHandlerFactoryClassName(String sessionHandlerFactoryClassName) {
-            this.sessionHandlerFactoryClassName=sessionHandlerFactoryClassName;
+            this.sessionHandlerFactoryClassName = sessionHandlerFactoryClassName;
             return this;
         }
 
         public Builder setSessionHandlerJndiName(String sessionHandlerJndiName) {
-            this.sessionHandlerJndiName=sessionHandlerJndiName;
+            this.sessionHandlerJndiName = sessionHandlerJndiName;
             return this;
         }
 
@@ -681,7 +689,7 @@ public class Configuration {
     }
 
     public boolean isAssuranceLevelSufficient(String value) {
-        if(value == null || value.length() < 1 || !isAssuranceLevelAllowed) {
+        if (value == null || value.length() < 1 || !isAssuranceLevelAllowed) {
             return false;
         }
 
@@ -696,22 +704,22 @@ public class Configuration {
     }
 
     public String getServletAssertionConsumerURL() {
-        return String.format("%s/%s/%s",baseUrl,servletRoutingPathPrefix,servletRoutingPathSuffixAssertion);
+        return String.format("%s/%s/%s", baseUrl, servletRoutingPathPrefix, servletRoutingPathSuffixAssertion);
     }
 
     public String getServletErrorURL() {
-        return String.format("%s/%s/%s",baseUrl,servletRoutingPathPrefix,servletRoutingPathSuffixError);
+        return String.format("%s/%s/%s", baseUrl, servletRoutingPathPrefix, servletRoutingPathSuffixError);
     }
 
     public String getServletLogoutURL() {
-        return String.format("%s/%s/%s",baseUrl,servletRoutingPathPrefix,servletRoutingPathSuffixLogout);
+        return String.format("%s/%s/%s", baseUrl, servletRoutingPathPrefix, servletRoutingPathSuffixLogout);
     }
 
     public String getServletLogoutResponseURL() {
-        return String.format("%s/%s/%s",baseUrl,servletRoutingPathPrefix,servletRoutingPathSuffixLogoutResponse);
+        return String.format("%s/%s/%s", baseUrl, servletRoutingPathPrefix, servletRoutingPathSuffixLogoutResponse);
     }
 
     public String getServletMetadataURL() {
-        return String.format("%s/%s/%s",baseUrl,servletRoutingPathPrefix,servletRoutingPathSuffixMetadata);
+        return String.format("%s/%s/%s", baseUrl, servletRoutingPathPrefix, servletRoutingPathSuffixMetadata);
     }
 }

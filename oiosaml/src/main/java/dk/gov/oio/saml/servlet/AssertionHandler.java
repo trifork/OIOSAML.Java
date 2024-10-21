@@ -186,7 +186,10 @@ public class AssertionHandler extends SAMLHandler {
         }
 
         AssertionWrapper assertionWrapper = new AssertionWrapper(assertion);
-        httpServletRequest.getSession(true);
+        boolean sessionFixationProtectEnabled = OIOSAML3Service.getConfig().isSessionFixationProtectEnabled();
+        if(sessionFixationProtectEnabled) {
+            httpServletRequest.getSession(true);
+        }
 
         session = sessionHandler.storeAssertion(session, assertionWrapper, httpServletRequest);
 

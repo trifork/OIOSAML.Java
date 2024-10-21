@@ -31,11 +31,11 @@ import dk.gov.oio.saml.session.LogoutRequestWrapper;
 import dk.gov.oio.saml.session.SessionHandler;
 import dk.gov.oio.saml.util.InternalException;
 import dk.gov.oio.saml.util.StringUtil;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
@@ -76,7 +76,7 @@ public class InMemorySessionHandler implements SessionHandler {
             log.debug("AuthRequest '{}' will replace '{}'", request.getId(), authnRequest.getId());
         }
         log.debug("Store AuthRequest '{}'", request.getId());
-        authnRequests.put(getSessionId(session),new TimeOutWrapper<>(request));
+        authnRequests.put(getSessionId(session), new TimeOutWrapper<>(request));
     }
 
     /**
@@ -96,7 +96,7 @@ public class InMemorySessionHandler implements SessionHandler {
         }
 
         // Replay validation
-        if(usedAssertionIds.contains(assertion.getID())) {
+        if (usedAssertionIds.contains(assertion.getID())) {
             log.warn("Assertion '{}' is being replayed", assertion.getID());
             throw new IllegalArgumentException(String.format("Assertion ID being replayed: '%s'", assertion.getID()));
         }
@@ -115,16 +115,20 @@ public class InMemorySessionHandler implements SessionHandler {
         }
 
         log.debug("Store Assertion '{}'", assertion.getID());
+        boolean sessionFixationProtectEnabled = OIOSAML3Service.getConfig().isSessionFixationProtectEnabled();
+        HttpSession newSession = null;
+        if (sessionFixationProtectEnabled) {
+            session.invalidate();
+            newSession = httpRequest.getSession(true);
+            log.info("Renewed session, old={}, new={}", session.getId(), newSession.getId());
+            // Replace session now to protect from session fixation attacks
+        }
 
-        // Replace session now to protect from session fixation attacks
-        session.invalidate();
-        HttpSession newSession = httpRequest.getSession(true);
-        log.info("Renewed session, old={}, new={}", session.getId(), newSession.getId());
+        HttpSession currentSession = newSession != null ? newSession : session;
+        assertions.put(getSessionId(currentSession), new TimeOutWrapper<>(assertion));
+        sessionIndexMap.put(StringUtil.defaultIfEmpty(assertion.getSessionIndex(), assertion.getID()), new TimeOutWrapper<>(getSessionId(currentSession)));
 
-        assertions.put(getSessionId(newSession), new TimeOutWrapper<>(assertion));
-        sessionIndexMap.put(StringUtil.defaultIfEmpty(assertion.getSessionIndex(), assertion.getID()), new TimeOutWrapper<>(getSessionId(newSession)));
-
-        return newSession;
+        return currentSession;
     }
 
     /**
@@ -144,7 +148,7 @@ public class InMemorySessionHandler implements SessionHandler {
             log.debug("LogoutRequest '{}' will replace '{}'", request.getID(), logoutRequest.getID());
         }
         log.debug("Store LogoutRequest '{}'", request.getID());
-        logoutRequests.put(getSessionId(session),new TimeOutWrapper<>(request));
+        logoutRequests.put(getSessionId(session), new TimeOutWrapper<>(request));
     }
 
     /**
@@ -192,7 +196,7 @@ public class InMemorySessionHandler implements SessionHandler {
     @Override
     public AssertionWrapper getAssertion(String sessionIndex) {
         if (null == sessionIndex || !sessionIndexMap.containsKey(sessionIndex)) {
-            log.debug("Session index '{}' is missing",sessionIndex);
+            log.debug("Session index '{}' is missing", sessionIndex);
             return null;
         }
         String sessionId = sessionIndexMap.get(sessionIndex).getObject();

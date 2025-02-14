@@ -82,6 +82,7 @@ public class SPMetadataService {
         // These are needed for NemLogin-2, might not be needed in the future
         AttributeConsumingService attributeConsumingService = SamlHelper.build(AttributeConsumingService.class);
         attributeConsumingService.setIsDefault(true);
+        attributeConsumingService.setIndex(0);
         attributeConsumingService.getNames().add(serviceName);
         attributeConsumingService.getRequestedAttributes().add(buildRequiredAttribute("https://data.gov.dk/model/core/specVersion", true));
         attributeConsumingService.getRequestedAttributes().add(buildRequiredAttribute("https://data.gov.dk/model/core/eid/bootstrapToken", false));

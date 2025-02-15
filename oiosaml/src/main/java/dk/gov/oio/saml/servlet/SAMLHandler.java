@@ -1,6 +1,7 @@
 package dk.gov.oio.saml.servlet;
 
 import java.io.IOException;
+import java.util.Properties;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -8,6 +9,7 @@ import net.shibboleth.shared.component.ComponentInitializationException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.apache.velocity.app.VelocityEngine;
 import org.opensaml.core.config.InitializationException;
 import org.opensaml.messaging.context.MessageContext;
 import org.opensaml.messaging.decoder.MessageDecodingException;
@@ -109,8 +111,18 @@ public abstract class SAMLHandler {
         encoder.setHttpServletResponseSupplier(() -> httpServletResponse);
         encoder.setMessageContext(message);
 
-        log.info("DO WE STILL NEED TO SET VELOCITY ENGINE?????????????");
-        // encoder.setVelocityEngine(VelocityEngine.newVelocityEngine());
+        VelocityEngine velocityEngine = new VelocityEngine();
+
+        // Set properties for ClasspathResourceLoader
+        Properties properties = new Properties();
+        properties.setProperty("resource.loader", "classpath");
+        properties.setProperty("classpath.resource.loader.class", 
+                               "org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader");
+
+        // Initialize Velocity with the properties
+        velocityEngine.init(properties);
+        
+        encoder.setVelocityEngine(velocityEngine);
 
         encoder.initialize();
         encoder.encode();

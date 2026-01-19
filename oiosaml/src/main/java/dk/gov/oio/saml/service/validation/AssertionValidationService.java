@@ -1,8 +1,12 @@
 package dk.gov.oio.saml.service.validation;
 
+import java.io.ByteArrayInputStream;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -29,6 +33,9 @@ import org.opensaml.saml.saml2.core.SubjectConfirmation;
 import org.opensaml.saml.saml2.core.SubjectConfirmationData;
 import org.opensaml.security.credential.UsageType;
 import org.opensaml.security.x509.BasicX509Credential;
+import org.opensaml.xmlsec.signature.KeyInfo;
+import org.opensaml.xmlsec.signature.Signature;
+import org.opensaml.xmlsec.signature.X509Data;
 import org.opensaml.xmlsec.signature.support.SignatureException;
 import org.opensaml.xmlsec.signature.support.SignatureValidator;
 import org.slf4j.Logger;
@@ -282,8 +289,14 @@ public class AssertionValidationService {
         // Get Signing credential
         String entityID = assertion.getIssuer().getValue();
         IdPMetadata idPMetadata = IdPMetadataService.getInstance().getIdPMetadata(entityID);
-        X509Certificate x509Certificate = idPMetadata.getValidX509Certificate(UsageType.SIGNING);
-        BasicX509Credential credential = new BasicX509Credential(x509Certificate);
+        List<X509Certificate> knownAndValidCertificates = idPMetadata.getValidX509Certificates(UsageType.SIGNING);
+
+        X509Certificate signingCertificate = getSigningCertificate(assertion);
+        X509Certificate matchingCertificate = knownAndValidCertificates.stream()
+                .filter(cert -> cert.equals(signingCertificate)).findAny()
+                .orElseThrow(() -> new AssertionValidationException("No maching IdP certificate found for entityId=" + entityID));
+
+        BasicX509Credential credential = new BasicX509Credential(matchingCertificate);
 
         // Validate Signature
         try {
@@ -291,6 +304,35 @@ public class AssertionValidationService {
         } catch (SignatureException e) {
             throw new AssertionValidationException("Could not validate assertion signature", e);
         }
+    }
+
+    private X509Certificate getSigningCertificate(Assertion assertion) throws AssertionValidationException {
+
+        Signature signature = assertion.getSignature();
+        if (signature != null) {
+            KeyInfo keyInfo = signature.getKeyInfo();
+            if (keyInfo != null) {
+                for (X509Data x509Data : keyInfo.getX509Datas()) {
+                    for (org.opensaml.xmlsec.signature.X509Certificate certElement : x509Data.getX509Certificates()) {
+
+                        byte[] decoded = Base64.getDecoder().decode(certElement.getValue());
+                        CertificateFactory cf;
+                        try {
+                            cf = CertificateFactory.getInstance("X.509");
+                            X509Certificate signingCert = (X509Certificate) cf.generateCertificate(
+                                    new ByteArrayInputStream(decoded));
+
+                            // <-- this is the certificate used to sign the assertion
+                            return signingCert;
+                        } catch (CertificateException e) {
+                            throw new AssertionValidationException("Unable to extract signing certificate from assertion", e);
+                        }
+                    }
+                }
+            }
+        }
+
+        throw new AssertionValidationException("No signing certifiate found");
     }
 
     private void validateAudienceRestriction(Assertion assertion) throws AssertionValidationException {

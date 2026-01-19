@@ -10,6 +10,7 @@ import java.security.cert.X509Certificate;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -101,29 +102,29 @@ public class IdPMetadata {
         return getEntityDescriptor().getIDPSSODescriptor(SAMLConstants.SAML20P_NS);
     }
 
-    public X509Certificate getValidX509Certificate(UsageType usageType) throws InternalException, ExternalException {
+    public List<X509Certificate> getValidX509Certificates(UsageType usageType) throws InternalException, ExternalException {
         doRevocationCheck();
 
-        X509Certificate result = null;
+        List<X509Certificate> result = null;
         if (UsageType.ENCRYPTION.equals(usageType)) {
             if (validEncryptionCertificates != null && !validEncryptionCertificates.isEmpty()) {
-                result = validEncryptionCertificates.get(0);
+                return validEncryptionCertificates;
             }
         }
         else if (UsageType.SIGNING.equals(usageType)) {
             if (validSigningCertificates != null && !validSigningCertificates.isEmpty()) {
-                result = validSigningCertificates.get(0);
+                return validSigningCertificates;
             }
         }
 
         // If certificate is not found yet, try the unspecified
         if (result == null) {
             if (validUnspecifiedCertificates != null && !validUnspecifiedCertificates.isEmpty()) {
-                result = validUnspecifiedCertificates.get(0);
+                return validUnspecifiedCertificates;
             }
         }
 
-        return result;
+        return Collections.emptyList();
     }
 
     private List<X509Certificate> getAllX509CertificatesWithUsageType(UsageType usageType) throws InternalException, ExternalException {

@@ -21,6 +21,14 @@ import org.xml.sax.SAXNotSupportedException;
 
 public class OIOBPPUtil {
     private static final Logger log = LoggerFactory.getLogger(OIOBPPUtil.class);
+    private static JAXBContext JAXB_CONTEXT;
+    static {
+        try {
+            JAXB_CONTEXT = JAXBContext.newInstance(ObjectFactory.class);
+        } catch (JAXBException e) {
+            log.warn("Unable to create JAXBContext", e);
+        }
+    } 
 
     @SuppressWarnings("unchecked")
     public static PrivilegeList parse(String object) {
@@ -33,14 +41,17 @@ public class OIOBPPUtil {
         }
 
         try {
-            JAXBContext context = JAXBContext.newInstance(ObjectFactory.class);
-            Unmarshaller unmarsheller = context.createUnmarshaller();
-            JAXBElement<PrivilegeList> privilegeList = (JAXBElement<PrivilegeList>) unmarsheller.unmarshal(getSecureSource(object));
-    
+            Unmarshaller unmarsheller = JAXB_CONTEXT.createUnmarshaller();
+            Object unmarshalled = unmarsheller.unmarshal(getSecureSource(object));
+            if (unmarshalled instanceof PrivilegeList) {
+                return (PrivilegeList) unmarshalled;
+            } 
+
+            JAXBElement<PrivilegeList> privilegeList = (JAXBElement<PrivilegeList>)unmarshalled ;
             return privilegeList.getValue();
         }
         catch (Exception ex) {
-            log.warn("Failed to parse input string: {}", object, ex);
+            log.warn("Failed to extract PrivilegeList from string: {}", object, ex);
         }
 
         return null;

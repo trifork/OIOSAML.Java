@@ -10,14 +10,14 @@ plugins {
 }
 
 dependencies {
-    api(libs.javax.servlet.jsp.jstl.javax.servlet.jsp.jstl.api)
+    api(libs.jakarta.servlet.jsp.jstl.jakarta.servlet.jsp.jstl.api)
     api(libs.taglibs.standard)
     api(project(":oiosaml3.java"))
     api(libs.org.apache.logging.log4j.log4j.slf4j.impl)
-    api(libs.org.slf4j.slf4j.api.x1)
+    api(libs.org.slf4j.slf4j.api)
     api(libs.org.slf4j.jcl.over.slf4j)
     api(libs.org.slf4j.log4j.over.slf4j)
-    providedCompile(libs.javax.servlet.javax.servlet.api)
+    providedCompile(libs.jakarta.servlet.jakarta.servlet.api)
 }
 
 description = "OIOSAML Demo for Java v3"

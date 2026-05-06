@@ -6,12 +6,12 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
+import org.bouncycastle.util.encoders.Base64;
 import org.opensaml.messaging.context.MessageContext;
 import org.opensaml.messaging.handler.MessageHandlerException;
 import org.opensaml.saml.common.assertion.AssertionValidationException;
@@ -315,7 +315,7 @@ public class AssertionValidationService {
                 for (X509Data x509Data : keyInfo.getX509Datas()) {
                     for (org.opensaml.xmlsec.signature.X509Certificate certElement : x509Data.getX509Certificates()) {
 
-                        byte[] decoded = Base64.getDecoder().decode(certElement.getValue());
+                        byte[] decoded = Base64.decode(certElement.getValue());
                         CertificateFactory cf;
                         try {
                             cf = CertificateFactory.getInstance("X.509");
